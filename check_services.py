@@ -9,23 +9,26 @@ import subprocess
 from schedule import every, repeat, run_pending
 import time
 
-def get_host_name():
-	if os.path.exists("/proc/sys/kernel/hostname"):
-		return open("/proc/sys/kernel/hostname").read().strip("\n")
-	else:
-		return ""
-		
+def get_str_from_file(filename):
+	if os.path.exists(filename):
+		with open(filename, "r") as data_file:
+			ret = data_file.read().strip("\n")
+		data_file.close()
+		return ret
+	return ""
+	
 def hbold(item):
 	return telebot.formatting.hbold(item)
 	
 current_path = "/root/service_check"
+RED_DOT, GREEN_DOT = "\U0001F534", "\U0001F7E2"
+hostname = hbold(get_str_from_file("/proc/sys/kernel/hostname"))
+
 if os.path.exists(f"{current_path}/config.json"):
 	parsed_json = json.loads(open(f"{current_path}/config.json", "r").read())
 	min_repeat = int(parsed_json["minutes"])
 else:
 	min_repeat = 3
-RED_DOT, GREEN_DOT = "\U0001F534", "\U0001F7E2"
-hostname = hbold(get_host_name())
 
 if os.path.exists(f"{current_path}/telegram_bot.json"):
 	parsed_json = json.loads(open(f"{current_path}/telegram_bot.json", "r").read())
@@ -41,13 +44,12 @@ else:
 
 @repeat(every(min_repeat).minutes)
 def check_services():
-	mode = mode_command = "silent"
 	dir_path = "/etc/systemd/system/multi-user.target.wants"
 	tmp_file = "/tmp/status_service.tmp"
 	files_file = os.listdir(dir_path)
 	service = exclude_service = []
 	count_service = all_service = 0
-	old_status_str = new_status_str = BAD_SERVICE_LIST = ""
+	old_status_str = new_status_str = bad_service_list = ""
 	if os.path.exists(f"{current_path}/exlude_service.json"):
 		parsed_json = json.loads(open(f"{current_path}/exlude_service.json", "r").read())
 		exclude_service = parsed_json["list"]
@@ -79,22 +81,18 @@ def check_services():
 			li[i] = "0"
 		else:
 			li[i] = "1"
-			BAD_SERVICE_LIST += f"{RED_DOT} - {hbold(service[i])} is inactive!\n"
+			bad_service_list += f"{RED_DOT} - {hbold(service[i])} is inactive!\n"
 	if count_service == all_service:
 		dot = f"{GREEN_DOT} - "
 	else:
 		dot = ""
 	result_services = all_service - count_service
-	bot_message = f"{dot}controlled service(s):\n|ALL| - {all_service}, |OK| - {count_service}, |BAD| - {result_services}\n{BAD_SERVICE_LIST} "
+	bot_message = f"{dot}controlled service(s):\n|ALL| - {all_service}, |OK| - {count_service}, |BAD| - {result_services}\n{bad_service_list} "
 	new_status_str = "".join(li)
-	if old_status_str == new_status_str:
-		mode = "silent"
-	else:
+	if old_status_str != new_status_str:
 		with open(tmp_file, "w") as status_file:	
 			status_file.write(new_status_str)
 			status_file.close()
-		mode = "info"
-	if mode_command == "info" or mode == "info":
 		print (f"{hostname} (services)\n{bot_message}")
 		try:
 			tb.send_message(CHAT_ID, f"{hostname} (services)\n{bot_message}", parse_mode='html')
