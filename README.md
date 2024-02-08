@@ -1,5 +1,5 @@
 # check_services
-services notifier
+**services change status notifier**
 ```
 nano /etc/systemd/system/check_services.service
 ```
