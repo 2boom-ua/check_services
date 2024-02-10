@@ -1,5 +1,5 @@
 {
-	"TOKEN": "6516846080:AAExanW-S6amGEummCMH-h1Vo6FlbzUUy7M",
-	"CHAT_ID": "677895454",
+	"TOKEN": "your_telegram_token",
+	"CHAT_ID": "your_telegram_chatid",
 	"MIN_REPEAT": "1"
 }
