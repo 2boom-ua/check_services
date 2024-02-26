@@ -37,41 +37,41 @@ def check_services():
 	DIR_PATH = "/etc/systemd/system/multi-user.target.wants"
 	TMP_FILE = "/tmp/status_service.tmp"
 	STATUS_DOT, RED_DOT, GREEN_DOT = "", "\U0001F534", "\U0001F7E2"
-	SERVICE = []
-	COUNT_SERVICE = ALL_SERVICES = RESULT_SERVICES = 0
-	OLD_STATUS_STR = NEW_STATUS_STR = BAD_SERVICE_LIST = ""
-	SERVICE = [FILE for FILE in os.listdir(DIR_PATH) if os.path.isfile(os.path.join(DIR_PATH, FILE)) and FILE.endswith('.service')]
-	SERVICE = list(set(SERVICE) - set(EXCLUDE_SERVICE))
-	ALL_SERVICES = len(SERVICE)
-	if not os.path.exists(TMP_FILE) or len(SERVICE) != os.path.getsize(TMP_FILE):
+	service = []
+	count_service = all_services = result_services = 0
+	old_status_str = new_status_str = bad_service_list = ""
+	service = [file for file in os.listdir(DIR_PATH) if os.path.isfile(os.path.join(DIR_PATH, file)) and file.endswith('.service')]
+	service = list(set(service) - set(EXCLUDE_SERVICE))
+	all_services = len(service)
+	if not os.path.exists(TMP_FILE) or len(service) != os.path.getsize(TMP_FILE):
 		with open(TMP_FILE, "w") as file:
-			OLD_STATUS_STR += "0" * len(SERVICE)
-			file.write(OLD_STATUS_STR)
+			old_status_str += "0" * len(service)
+			file.write(old_status_str)
 		file.close()
 	else:
 		with open(TMP_FILE, "r") as file:
-			OLD_STATUS_STR = file.read()
+			old_status_str = file.read()
 		file.close()
-	li = list(OLD_STATUS_STR)
-	for i in range(ALL_SERVICES):
-		check = subprocess.run(["systemctl", "is-active", SERVICE[i]], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+	li = list(old_status_str)
+	for i in range(all_services):
+		check = subprocess.run(["systemctl", "is-active", service[i]], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 		if check.stdout == b"active\n":
-			COUNT_SERVICE += 1
+			count_service += 1
 			li[i] = "0"
 		else:
 			li[i] = "1"
-			BAD_SERVICE_LIST += f"{RED_DOT} - *{SERVICE[i]}* is _inactive_!\n"
-	if COUNT_SERVICE == ALL_SERVICES:
+			bad_service_list += f"{RED_DOT} - *{service[i]}* is _inactive_!\n"
+	if count_service == all_services:
 		STATUS_DOT = f"{GREEN_DOT} - "
-	RESULT_SERVICES = ALL_SERVICES - COUNT_SERVICE
-	BOT_MESSAGE = f"{STATUS_DOT}controlled service(s):\n|ALL| - {ALL_SERVICES}, |OK| - {COUNT_SERVICE}, |BAD| - {RESULT_SERVICES}\n{BAD_SERVICE_LIST} "
-	NEW_STATUS_STR = "".join(li)
-	if OLD_STATUS_STR != NEW_STATUS_STR:
+	result_services = all_services - count_service
+	bot_message = f"{STATUS_DOT}controlled service(s):\n|ALL| - {all_services}, |OK| - {count_service}, |BAD| - {result_services}\n{bad_service_list} "
+	new_status_str = "".join(li)
+	if old_status_str != new_status_str:
 		with open(TMP_FILE, "w") as file:	
-			file.write(NEW_STATUS_STR)
+			file.write(new_status_str)
 		file.close()
-		print (f"*{HOSTNAME}* (services)\n{BOT_MESSAGE}")
-		telegram_message(f"*{HOSTNAME}* (services)\n{BOT_MESSAGE}")
+		print (f"*{HOSTNAME}* (services)\n{bot_message}")
+		telegram_message(f"*{HOSTNAME}* (services)\n{bot_message}")
 while True:
     run_pending()
     time.sleep(1)
