@@ -45,7 +45,7 @@ def check_services():
 	all_services = len(service)
 	if not os.path.exists(TMP_FILE) or len(service) != os.path.getsize(TMP_FILE):
 		with open(TMP_FILE, "w") as file:
-			old_status_str += "0" * len(service)
+			old_status_str = "0" * len(service)
 			file.write(old_status_str)
 		file.close()
 	else:
