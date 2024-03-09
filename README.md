@@ -1,5 +1,16 @@
 # check_services
-**services change status notifier**
+services change status notifier
+**config.json**
+```
+{
+	"TELEGRAM": {
+		"TOKEN": "your_token",
+		"CHAT_ID": "your_chat_id"
+	},
+	"MIN_REPEAT": 1
+}
+```
+**make as service**
 ```
 nano /etc/systemd/system/check_services.service
 ```
