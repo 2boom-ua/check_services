@@ -25,10 +25,10 @@ if __name__ == "__main__":
 	if os.path.exists(f"{CURRENT_PATH}/config.json"):
 		parsed_json = json.loads(open(f"{CURRENT_PATH}/config.json", "r").read())
 		MIN_REPEAT = int(parsed_json["MIN_REPEAT"])
-		TOKEN = parsed_json["TOKEN"]
-		CHAT_ID = parsed_json["CHAT_ID"]
+		TOKEN = parsed_json["TELEGRAM"]["TOKEN"]
+		CHAT_ID = parsed_json["TELEGRAM"]["CHAT_ID"]
 		tb = telebot.TeleBot(TOKEN)
-		telegram_message(f"*{HOSTNAME}* (services)\nservices monitor started: check period {MIN_REPEAT} minute(s)")
+		telegram_message(f"*{HOSTNAME}* (services)\nservices monitor started:\n- polling period {MIN_REPEAT} minute(s)")
 	else:
 		print("config.json not found")
 
@@ -60,11 +60,11 @@ def check_services():
 			li[i] = "0"
 		else:
 			li[i] = "1"
-			bad_service_list += f"{RED_DOT} - *{service[i]}* is _inactive_!\n"
+			bad_service_list += f"{RED_DOT} *{service[i]}*: inactive!\n"
 	if count_service == all_services:
-		STATUS_DOT = f"{GREEN_DOT} - "
+		STATUS_DOT = f"{GREEN_DOT} "
 	result_services = all_services - count_service
-	bot_message = f"{STATUS_DOT}controlled service(s):\n|ALL| - {all_services}, |OK| - {count_service}, |BAD| - {result_services}\n{bad_service_list} "
+	bot_message = f"{STATUS_DOT}monitoring service(s):\n|ALL| - {all_services}, |OK| - {count_service}, |BAD| - {result_services}\n{bad_service_list} "
 	new_status_str = "".join(li)
 	if old_status_str != new_status_str:
 		with open(TMP_FILE, "w") as file:	
