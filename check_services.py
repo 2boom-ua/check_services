@@ -48,10 +48,9 @@ def check_services():
 			old_status_str = "0" * len(service)
 			file.write(old_status_str)
 		file.close()
-	else:
-		with open(TMP_FILE, "r") as file:
-			old_status_str = file.read()
-		file.close()
+	with open(TMP_FILE, "r") as file:
+		old_status_str = file.read()
+	file.close()
 	li = list(old_status_str)
 	for i in range(all_services):
 		check = subprocess.run(["systemctl", "is-active", service[i]], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
