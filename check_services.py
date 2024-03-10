@@ -16,7 +16,7 @@ def telegram_message(message : str):
 		print(f"error: {e}")
 
 if __name__ == "__main__":	
-	CURRENT_PATH = "/root/service_check"
+	CURRENT_PATH =  os.path.dirname(os.path.realpath(__file__))
 	HOSTNAME = open('/proc/sys/kernel/hostname', 'r').read().strip('\n')
 	EXCLUDE_SERVICE = []
 	if os.path.exists(f"{CURRENT_PATH}/exlude_service.json"):
