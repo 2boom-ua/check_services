@@ -23,7 +23,7 @@ After=multi-user.target
 [Service]
 Type=simple
 Restart=always
-ExecStart=/usr/bin/python3 /opt/service_check/check_services.py
+ExecStart=/usr/bin/python3 /opt/check_services/check_services.py
 
 [Install]
 WantedBy=multi-user.target
