@@ -6,9 +6,9 @@ import json
 import telebot
 import os.path
 import subprocess
-from schedule import every, repeat, run_pending
 import time
-	
+from schedule import every, repeat, run_pending
+
 def telegram_message(message : str):
 	try:
 		tb.send_message(CHAT_ID, message, parse_mode='markdown')
@@ -16,19 +16,19 @@ def telegram_message(message : str):
 		print(f"error: {e}")
 
 if __name__ == "__main__":	
-	CURRENT_PATH =  os.path.dirname(os.path.realpath(__file__))
 	HOSTNAME = open('/proc/sys/kernel/hostname', 'r').read().strip('\n')
+	CURRENT_PATH =  os.path.dirname(os.path.realpath(__file__))
 	EXCLUDE_SERVICE = []
 	if os.path.exists(f"{CURRENT_PATH}/exlude_service.json"):
 		parsed_json = json.loads(open(f"{CURRENT_PATH}/exlude_service.json", "r").read())
 		EXCLUDE_SERVICE = parsed_json["list"]
 	if os.path.exists(f"{CURRENT_PATH}/config.json"):
 		parsed_json = json.loads(open(f"{CURRENT_PATH}/config.json", "r").read())
-		MIN_REPEAT = int(parsed_json["MIN_REPEAT"])
 		TOKEN = parsed_json["TELEGRAM"]["TOKEN"]
 		CHAT_ID = parsed_json["TELEGRAM"]["CHAT_ID"]
+		MIN_REPEAT = int(parsed_json["MIN_REPEAT"])
 		tb = telebot.TeleBot(TOKEN)
-		telegram_message(f"*{HOSTNAME}* (services)\nservices monitor started:\n- polling period {MIN_REPEAT} minute(s)")
+		telegram_message(f"*{HOSTNAME}* (services)\nservices monitor started:\n- polling period {MIN_REPEAT} minute(s).")
 	else:
 		print("config.json not found")
 
@@ -39,7 +39,7 @@ def check_services():
 	STATUS_DOT, RED_DOT, GREEN_DOT = "", "\U0001F534", "\U0001F7E2"
 	service = []
 	count_service = all_services = result_services = 0
-	old_status_str = new_status_str = bad_service_list = ""
+	MESSAGE = old_status_str = new_status_str = bad_service_list = ""
 	service = [file for file in os.listdir(DIR_PATH) if os.path.isfile(os.path.join(DIR_PATH, file)) and file.endswith('.service')]
 	service = list(set(service) - set(EXCLUDE_SERVICE))
 	all_services = len(service)
@@ -61,16 +61,15 @@ def check_services():
 			li[i] = "1"
 			bad_service_list += f"{RED_DOT} *{service[i]}*: inactive!\n"
 	if count_service == all_services:
-		STATUS_DOT = f"{GREEN_DOT} "
+		STATUS_DOT = f"{GREEN_DOT}"
 	result_services = all_services - count_service
-	bot_message = f"{STATUS_DOT}monitoring service(s):\n|ALL| - {all_services}, |OK| - {count_service}, |BAD| - {result_services}\n{bad_service_list} "
+	MESSAGE = f"{STATUS_DOT} monitoring service(s):\n|ALL| - {all_services}, |OK| - {count_service}, |BAD| - {result_services}\n{bad_service_list} "
 	new_status_str = "".join(li)
 	if old_status_str != new_status_str:
 		with open(TMP_FILE, "w") as file:	
 			file.write(new_status_str)
 		file.close()
-		print (f"*{HOSTNAME}* (services)\n{bot_message}")
-		telegram_message(f"*{HOSTNAME}* (services)\n{bot_message}")
+		telegram_message(f"*{HOSTNAME}* (services)\n{MESSAGE}")
 while True:
     run_pending()
     time.sleep(1)
