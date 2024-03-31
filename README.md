@@ -1,5 +1,5 @@
 # check_services
-services change status notifier
+services change status notifier for Telegram
 
 **config.json**
 ```
