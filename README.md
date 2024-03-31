@@ -1,12 +1,17 @@
 # check_services
-services change status notifier for Telegram
+services change status notifier for Telegram, Discord
 
 **config.json**
 ```
 {
 	"TELEGRAM": {
+		"ON": true,
 		"TOKEN": "your_token",
 		"CHAT_ID": "your_chat_id"
+	},
+	"DISCORD": {
+		"ON": true,
+		"WEB": "web_your_channel"
 	},
 	"MIN_REPEAT": 1
 }
