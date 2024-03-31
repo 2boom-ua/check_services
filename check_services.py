@@ -7,13 +7,20 @@ import telebot
 import os.path
 import subprocess
 import time
+import discord_notify as dn
 from schedule import every, repeat, run_pending
 
-def telegram_message(message : str):
-	try:
-		tb.send_message(CHAT_ID, message, parse_mode='markdown')
-	except Exception as e:
-		print(f"error: {e}")
+def send_message(message : str):
+	if TELEGRAM_ON:
+		try:
+			tb.send_message(CHAT_ID, message, parse_mode="markdown")
+		except Exception as e:
+			print(f"error: {e}")
+	if DISCORD_ON:
+		try:
+			notifier.send(message.replace("*", "**").replace("\t", ""), print_message=False)
+		except Exception as e:
+			print(f"error: {e}")
 
 if __name__ == "__main__":	
 	HOSTNAME = open('/proc/sys/kernel/hostname', 'r').read().strip('\n')
@@ -24,11 +31,20 @@ if __name__ == "__main__":
 		EXCLUDE_SERVICE = parsed_json["list"]
 	if os.path.exists(f"{CURRENT_PATH}/config.json"):
 		parsed_json = json.loads(open(f"{CURRENT_PATH}/config.json", "r").read())
-		TOKEN = parsed_json["TELEGRAM"]["TOKEN"]
-		CHAT_ID = parsed_json["TELEGRAM"]["CHAT_ID"]
+		TELEGRAM_ON = parsed_json["TELEGRAM"]["ON"]
+		DISCORD_ON = parsed_json["DISCORD"]["ON"]
+		if TELEGRAM_ON:
+			TOKEN = parsed_json["TELEGRAM"]["TOKEN"]
+			CHAT_ID = parsed_json["TELEGRAM"]["CHAT_ID"]
+			tb = telebot.TeleBot(TOKEN)
+		if DISCORD_ON:
+			DISCORD_WEB = parsed_json["DISCORD"]["WEB"]
+			notifier = dn.Notifier(DISCORD_WEB)
 		MIN_REPEAT = int(parsed_json["MIN_REPEAT"])
-		tb = telebot.TeleBot(TOKEN)
-		telegram_message(f"*{HOSTNAME}* (services)\nservices monitor started:\n- polling period {MIN_REPEAT} minute(s).")
+		send_message(f"*{HOSTNAME}* (services)\nservices monitor started:\n\
+		- polling period {MIN_REPEAT} minute(s),\n\
+		- messenging Telegram: {str(TELEGRAM_ON).lower()},\n\
+		- messenging Discord: {str(DISCORD_ON).lower()}.")
 	else:
 		print("config.json not found")
 
@@ -69,7 +85,7 @@ def check_services():
 		with open(TMP_FILE, "w") as file:	
 			file.write(new_status_str)
 		file.close()
-		telegram_message(f"*{HOSTNAME}* (services)\n{MESSAGE}")
+		send_message(f"*{HOSTNAME}* (services)\n{MESSAGE}")
 while True:
     run_pending()
     time.sleep(1)
