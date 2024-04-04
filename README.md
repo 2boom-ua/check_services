@@ -1,5 +1,9 @@
 # check_services
-services change status notifier for Telegram, Discord
+services change status notifier for Telegram, Discord, Gotify
+
+*** [Gotify - a simple server for sending and receiving messages (in real time per WebSocket). ](https://github.com/gotify/server)
+
+![alt text](https://github.com/Vladimi2boom/dockchek/blob/main/screen/dockcheck2.jpg?raw=true)
 
 **config.json**
 ```
@@ -13,6 +17,12 @@ services change status notifier for Telegram, Discord
 		"ON": true,
 		"WEB": "web_your_channel"
 	},
+	"GOTIFY": {
+		"ON": true,
+		"TOKEN": "your_token",
+		"WEB": "server_url/message"
+	},
+
 	"MIN_REPEAT": 1
 }
 ```
