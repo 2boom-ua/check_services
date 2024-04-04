@@ -7,8 +7,10 @@ import telebot
 import os.path
 import subprocess
 import time
+import requests
 import discord_notify as dn
 from schedule import every, repeat, run_pending
+from urllib.error import URLError, HTTPError
 
 def send_message(message : str):
 	if TELEGRAM_ON:
@@ -21,6 +23,13 @@ def send_message(message : str):
 			notifier.send(message.replace("*", "**").replace("\t", ""), print_message=False)
 		except Exception as e:
 			print(f"error: {e}")
+	if GOTIFY_ON:
+		data = {"message": message.replace("*", "").replace("\t", "")}
+		headers = {"X-Gotify-Key": GOTIFY_TOKEN, "Content-Type": "application/json"}
+		try:
+			response = requests.post(GOTIFY_WEB, json=data, headers=headers)
+		except HTTPError as e:
+			print(f"reason: {e.reason}")
 
 if __name__ == "__main__":	
 	HOSTNAME = open('/proc/sys/kernel/hostname', 'r').read().strip('\n')
@@ -33,6 +42,7 @@ if __name__ == "__main__":
 		parsed_json = json.loads(open(f"{CURRENT_PATH}/config.json", "r").read())
 		TELEGRAM_ON = parsed_json["TELEGRAM"]["ON"]
 		DISCORD_ON = parsed_json["DISCORD"]["ON"]
+		GOTIFY_ON = parsed_json["GOTIFY"]["ON"]
 		if TELEGRAM_ON:
 			TOKEN = parsed_json["TELEGRAM"]["TOKEN"]
 			CHAT_ID = parsed_json["TELEGRAM"]["CHAT_ID"]
@@ -40,6 +50,9 @@ if __name__ == "__main__":
 		if DISCORD_ON:
 			DISCORD_WEB = parsed_json["DISCORD"]["WEB"]
 			notifier = dn.Notifier(DISCORD_WEB)
+		if GOTIFY_ON:
+			GOTIFY_WEB = parsed_json["GOTIFY"]["WEB"]
+			GOTIFY_TOKEN = parsed_json["GOTIFY"]["TOKEN"]
 		MIN_REPEAT = int(parsed_json["MIN_REPEAT"])
 		send_message(f"*{HOSTNAME}* (services)\nservices monitor started:\n\
 		- polling period: {MIN_REPEAT} minute(s),\n\
