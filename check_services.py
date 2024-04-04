@@ -57,7 +57,8 @@ if __name__ == "__main__":
 		send_message(f"*{HOSTNAME}* (services)\nservices monitor started:\n\
 		- polling period: {MIN_REPEAT} minute(s),\n\
 		- messenging Telegram: {str(TELEGRAM_ON).lower()},\n\
-		- messenging Discord: {str(DISCORD_ON).lower()}.")
+		- messenging Discord: {str(DISCORD_ON).lower()},\n\
+		- messenging Gotify: {str(GOTIFY_ON).lower()}.")
 	else:
 		print("config.json not found")
 
