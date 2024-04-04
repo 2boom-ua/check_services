@@ -3,7 +3,6 @@ services change status notifier for Telegram, Discord, Gotify
 
 *** [Gotify - a simple server for sending and receiving messages (in real time per WebSocket). ](https://github.com/gotify/server)
 
-![alt text](https://github.com/Vladimi2boom/dockchek/blob/main/screen/dockcheck2.jpg?raw=true)
 
 **config.json**
 ```
