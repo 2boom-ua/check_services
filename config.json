@@ -8,5 +8,10 @@
 		"ON": true,
 		"WEB": "web_your_channel"
 	},
+	"GOTIFY": {
+		"ON": true,
+		"TOKEN": "your_token",
+		"WEB": "server_url/message"
+	},
 	"MIN_REPEAT": 1
 }
