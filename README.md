@@ -19,7 +19,7 @@ services change status notifier for Telegram, Discord, Gotify
 	"GOTIFY": {
 		"ON": true,
 		"TOKEN": "your_token",
-		"WEB": "server_url/message"
+		"WEB": "server_url"
 	},
 
 	"MIN_REPEAT": 1
