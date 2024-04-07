@@ -1,7 +1,5 @@
 # check_services
-services status informer for Telegram, Discord, Gotify as linux service
-
-*** [Gotify - a simple server for sending and receiving messages (in real time per WebSocket). ](https://github.com/gotify/server)
+services status informer for Telegram, Discord, Gotify, Ntfy  as linux service
 
 ```
 pip install -r requirements.txt
@@ -24,7 +22,11 @@ pip install -r requirements.txt
 		"TOKEN": "your_token",
 		"WEB": "server_url"
 	},
-
+	"NTFY": {
+		"ON": true,
+		"SUB": "your_subscribe",
+		"WEB": "server_url"
+	},
 	"MIN_REPEAT": 1
 }
 ```
