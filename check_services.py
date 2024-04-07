@@ -42,6 +42,8 @@ if __name__ == "__main__":
 	HOSTNAME = open('/proc/sys/kernel/hostname', 'r').read().strip('\n')
 	CURRENT_PATH =  os.path.dirname(os.path.realpath(__file__))
 	EXCLUDE_SERVICE = []
+	TELEGRAM_ON = DISCORD_ON = GOTIFY_ON = NTFY_ON = False
+	TOKEN = CHAT_ID = DISCORD_WEB = GOTIFY_WEB = GOTIFY_TOKEN = NTFY_WEB = NTFY_SUB = ""
 	if os.path.exists(f"{CURRENT_PATH}/exlude_service.json"):
 		parsed_json = json.loads(open(f"{CURRENT_PATH}/exlude_service.json", "r").read())
 		EXCLUDE_SERVICE = parsed_json["list"]
