@@ -7,6 +7,7 @@ import telebot
 import os.path
 import subprocess
 import time
+import requests
 from gotify import Gotify
 import discord_notify as dn
 from schedule import every, repeat, run_pending
@@ -22,13 +23,18 @@ def send_message(message : str):
 			notifier.send(message.replace("*", "**").replace("\t", ""), print_message=False)
 		except Exception as e:
 			print(f"error: {e}")
+	message = message.replace("*", "").replace("\t", "")
+	header = message[:message.index("\n")].rstrip("\n")
+	message = message[message.index("\n"):].strip("\n")
 	if GOTIFY_ON:
-		message = message.replace("*", "").replace("\t", "")
-		header = message[:message.index("\n")].rstrip("\n")
-		message = message[message.index("\n"):].strip("\n")
 		gotify = Gotify(base_url=GOTIFY_WEB, app_token=GOTIFY_TOKEN)
 		try:
 			gotify.create_message(message, title = header)
+		except Exception as e:
+			print(f"error: {e}")
+	if NTFY_ON:
+		try:
+			requests.post(f"{NTFY_WEB}/{NTFY_SUB}", data=message.encode(encoding='utf-8'), headers={"Title": header})
 		except Exception as e:
 			print(f"error: {e}")
 
@@ -44,6 +50,7 @@ if __name__ == "__main__":
 		TELEGRAM_ON = parsed_json["TELEGRAM"]["ON"]
 		DISCORD_ON = parsed_json["DISCORD"]["ON"]
 		GOTIFY_ON = parsed_json["GOTIFY"]["ON"]
+		NTFY_ON = parsed_json["NTFY"]["ON"]
 		if TELEGRAM_ON:
 			TOKEN = parsed_json["TELEGRAM"]["TOKEN"]
 			CHAT_ID = parsed_json["TELEGRAM"]["CHAT_ID"]
@@ -54,11 +61,15 @@ if __name__ == "__main__":
 		if GOTIFY_ON:
 			GOTIFY_WEB = parsed_json["GOTIFY"]["WEB"]
 			GOTIFY_TOKEN = parsed_json["GOTIFY"]["TOKEN"]
+		if NTFY_ON:
+			NTFY_WEB = parsed_json["NTFY"]["WEB"]
+			NTFY_SUB = parsed_json["NTFY"]["SUB"]
 		MIN_REPEAT = int(parsed_json["MIN_REPEAT"])
 		send_message(f"*{HOSTNAME}* (services)\nservices monitor started:\n\
 		- polling period: {MIN_REPEAT} minute(s),\n\
 		- messenging Telegram: {str(TELEGRAM_ON).lower()},\n\
 		- messenging Discord: {str(DISCORD_ON).lower()},\n\
+		- messenging Ntfy: {str(NTFY_ON).lower()},\n\
 		- messenging Gotify: {str(GOTIFY_ON).lower()}.")
 	else:
 		print("config.json not found")
