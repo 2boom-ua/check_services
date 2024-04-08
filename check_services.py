@@ -37,6 +37,18 @@ def send_message(message : str):
 			requests.post(f"{NTFY_WEB}/{NTFY_SUB}", data=message.encode(encoding='utf-8'), headers={"Title": header})
 		except Exception as e:
 			print(f"error: {e}")
+			
+def messaging_service():
+	messaging = ""
+	if TELEGRAM_ON:
+		messaging += "- messenging: Telegram,\n"
+	if DISCORD_ON:
+		messaging += "- messenging: Discord,\n"
+	if GOTIFY_ON:
+		messaging += "- messenging: Gotify,\n"
+	if NTFY_ON:
+		messaging += "- messenging: Ntfy,\n"
+	return messaging
 
 if __name__ == "__main__":	
 	HOSTNAME = open('/proc/sys/kernel/hostname', 'r').read().strip('\n')
@@ -67,12 +79,7 @@ if __name__ == "__main__":
 			NTFY_WEB = parsed_json["NTFY"]["WEB"]
 			NTFY_SUB = parsed_json["NTFY"]["SUB"]
 		MIN_REPEAT = int(parsed_json["MIN_REPEAT"])
-		send_message(f"*{HOSTNAME}* (services)\nservices monitor started:\n\
-		- polling period: {MIN_REPEAT} minute(s),\n\
-		- messenging Telegram: {str(TELEGRAM_ON).lower()},\n\
-		- messenging Discord: {str(DISCORD_ON).lower()},\n\
-		- messenging Ntfy: {str(NTFY_ON).lower()},\n\
-		- messenging Gotify: {str(GOTIFY_ON).lower()}.")
+		send_message(f"*{HOSTNAME}* (services)\nservices monitor:\n{messaging_service()}- polling period: {MIN_REPEAT} minute(s).")
 	else:
 		print("config.json not found")
 
