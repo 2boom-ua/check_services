@@ -18,5 +18,9 @@
 		"SUB": "your_subscribe",
 		"WEB": "server_url"
 	},
+	"PUSHBULLET": {
+		"ON": false,
+		"API": "your_api_key"
+	},
 	"MIN_REPEAT": 1
 }
