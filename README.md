@@ -1,5 +1,5 @@
 # check_services
-services status informer for Telegram, Discord, Gotify, Ntfy  as linux service
+services status informer for Telegram, Discord, Gotify, Ntfy, Pushbullet  as linux service
 
 ```
 pip install -r requirements.txt
@@ -26,6 +26,10 @@ pip install -r requirements.txt
 		"ON": true,
 		"SUB": "your_subscribe",
 		"WEB": "server_url"
+	},
+	"PUSHBULLET": {
+		"ON": false,
+		"API": "your_api_key"
 	},
 	"MIN_REPEAT": 1
 }
