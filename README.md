@@ -1,5 +1,5 @@
 # check_services
-services status informer for Telegram, Discord, Gotify, Ntfy, Pushbullet  as linux service
+services status informer for Telegram, Discord, Gotify, Ntfy, Pushbullet? Slack  as linux service
 
 ```
 pip install -r requirements.txt
@@ -15,7 +15,7 @@ pip install -r requirements.txt
 	},
 	"DISCORD": {
 		"ON": true,
-		"WEB": "web_your_channel"
+		"WEB": "web_hook_url"
 	},
 	"GOTIFY": {
 		"ON": true,
@@ -31,6 +31,10 @@ pip install -r requirements.txt
 		"ON": false,
 		"API": "your_api_key"
 	},
+	"SLACK": {
+		"ON": true,
+		"WEB": "web_hook_url"
+	},
 	"MIN_REPEAT": 1
 }
 ```
@@ -40,7 +44,7 @@ nano /etc/systemd/system/check_services.service
 ```
 ```
 [Unit]
-Description=check active services
+Description=check services state
 After=multi-user.target
 
 [Service]
