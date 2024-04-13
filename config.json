@@ -22,5 +22,9 @@
 		"ON": false,
 		"API": "your_api_key"
 	},
+	"SLACK": {
+		"ON": true,
+		"WEB": "web_hook_url"
+	},
 	"MIN_REPEAT": 1
 }
