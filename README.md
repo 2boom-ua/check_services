@@ -44,7 +44,7 @@ nano /etc/systemd/system/check_services.service
 ```
 ```
 [Unit]
-Description=check services state
+Description=services state change monitor
 After=multi-user.target
 
 [Service]
