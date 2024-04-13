@@ -8,6 +8,7 @@ import os.path
 import subprocess
 import time
 import requests
+from gotify import Gotify
 import discord_notify as dn
 from schedule import every, repeat, run_pending
 
@@ -23,13 +24,19 @@ def send_message(message : str):
 			notifier.send(message.replace("*", "**"), print_message=False)
 		except Exception as e:
 			print(f"error: {e}")
+	if SLACK_ON:
+		payload = {"text": message}
+		try:
+			requests.post(SLACK_WEB, json.dumps(payload))
+		except Exception as e:
+			print(f"error: {e}")
 	message = message.replace("*", "")
 	header = message[:message.index("\n")].rstrip("\n")
 	message = message[message.index("\n"):].strip("\n")
 	if GOTIFY_ON:
+		gotify = Gotify(base_url=GOTIFY_WEB, app_token=GOTIFY_TOKEN)
 		try:
-			requests.post(f"{GOTIFY_WEB}/message?token={GOTIFY_TOKEN}",\
-			json={'title': header, 'message': message, 'priority': 0})
+			gotify.create_message(message, title = header)
 		except Exception as e:
 			print(f"error: {e}")
 	if NTFY_ON:
@@ -57,14 +64,16 @@ def messaging_service():
 		messaging += "- messenging: Ntfy,\n"
 	if PUSHBULLET_ON:
 		messaging += "- messenging: Pushbullet,\n"
+	if SLACK_ON:
+		messaging += "- messenging: Slack,\n"
 	return messaging
 
 if __name__ == "__main__":	
 	HOSTNAME = open('/proc/sys/kernel/hostname', 'r').read().strip('\n')
 	CURRENT_PATH =  os.path.dirname(os.path.realpath(__file__))
 	EXCLUDE_SERVICE = []
-	TELEGRAM_ON = DISCORD_ON = GOTIFY_ON = NTFY_ON = False
-	TOKEN = CHAT_ID = DISCORD_WEB = GOTIFY_WEB = GOTIFY_TOKEN = NTFY_WEB = NTFY_SUB = ""
+	TELEGRAM_ON = DISCORD_ON = GOTIFY_ON = NTFY_ON = SLACK_ON = False
+	TOKEN = CHAT_ID = DISCORD_WEB = GOTIFY_WEB = GOTIFY_TOKEN = NTFY_WEB = NTFY_SUB = PUSHBULLET_API = SLACK_WEB = ""
 	if os.path.exists(f"{CURRENT_PATH}/exlude_service.json"):
 		parsed_json = json.loads(open(f"{CURRENT_PATH}/exlude_service.json", "r").read())
 		EXCLUDE_SERVICE = parsed_json["list"]
@@ -75,6 +84,7 @@ if __name__ == "__main__":
 		GOTIFY_ON = parsed_json["GOTIFY"]["ON"]
 		NTFY_ON = parsed_json["NTFY"]["ON"]
 		PUSHBULLET_ON = parsed_json["PUSHBULLET"]["ON"]
+		SLACK_ON = parsed_json["SLACK"]["ON"]
 		if TELEGRAM_ON:
 			TOKEN = parsed_json["TELEGRAM"]["TOKEN"]
 			CHAT_ID = parsed_json["TELEGRAM"]["CHAT_ID"]
@@ -90,6 +100,8 @@ if __name__ == "__main__":
 			NTFY_SUB = parsed_json["NTFY"]["SUB"]
 		if PUSHBULLET_ON:
 			PUSHBULLET_API = parsed_json["PUSHBULLET"]["API"]
+		if SLACK_ON:
+			SLACK_WEB = parsed_json["SLACK"]["WEB"]
 		MIN_REPEAT = int(parsed_json["MIN_REPEAT"])
 		send_message(f"*{HOSTNAME}* (services)\nservices monitor:\n{messaging_service()}- polling period: {MIN_REPEAT} minute(s).")
 	else:
