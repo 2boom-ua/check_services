@@ -3,54 +3,44 @@
 # Copyright (c) 2boom 2023-24
 
 import json
-import telebot
 import os.path
 import subprocess
 import time
 import requests
-from gotify import Gotify
-import discord_notify as dn
 from schedule import every, repeat, run_pending
 
 def send_message(message : str):
 	message = message.replace("\t", "")
 	if TELEGRAM_ON:
-		try:
-			tb.send_message(CHAT_ID, message, parse_mode="markdown")
-		except Exception as e:
-			print(f"error: {e}")
+		response = requests.post(f"https://api.telegram.org/bot{TOKEN}/sendMessage", json={"chat_id": CHAT_ID, "text": message, "parse_mode": "Markdown"})
+		if response.status_code != 200:
+			print(f"error: {response.status_code}")
 	if DISCORD_ON:
-		try:
-			notifier.send(message.replace("*", "**"), print_message=False)
-		except Exception as e:
-			print(f"error: {e}")
+		response = requests.post(DISCORD_WEB, json={"content": message.replace("*", "**")})
+		if response.status_code != 200:
+			print(f"error: {response.status_code}")
 	if SLACK_ON:
-		payload = {"text": message}
-		try:
-			requests.post(SLACK_WEB, json.dumps(payload))
-		except Exception as e:
-			print(f"error: {e}")
+		response = requests.post(SLACK_WEB, json = {"text": message})
+		if response.status_code != 200:
+			print(f"error: {response.status_code}")
 	message = message.replace("*", "")
 	header = message[:message.index("\n")].rstrip("\n")
 	message = message[message.index("\n"):].strip("\n")
 	if GOTIFY_ON:
-		gotify = Gotify(base_url=GOTIFY_WEB, app_token=GOTIFY_TOKEN)
-		try:
-			gotify.create_message(message, title = header)
-		except Exception as e:
-			print(f"error: {e}")
+		response = requests.post(f"{GOTIFY_WEB}/message?token={GOTIFY_TOKEN}",\
+		json={'title': header, 'message': message, 'priority': 0})
+		if response.status_code != 200:
+			print(f"error: {response.status_code}")
 	if NTFY_ON:
-		try:
-			requests.post(f"{NTFY_WEB}/{NTFY_SUB}", data=message.encode(encoding='utf-8'), headers={"Title": header})
-		except Exception as e:
-			print(f"error: {e}")
+		response = requests.post(f"{NTFY_WEB}/{NTFY_SUB}", data=message.encode(encoding='utf-8'), headers={"Title": header})
+		if response.status_code != 200:
+			print(f"error: {response.status_code}")
 	if PUSHBULLET_ON:
-		try:
-			requests.post('https://api.pushbullet.com/v2/pushes',\
-			json={'type': 'note', 'title': header, 'body': message},\
-			headers={'Access-Token': PUSHBULLET_API, 'Content-Type': 'application/json'})
-		except Exception as e:
-			print(f"error: {e}")
+		response = requests.post('https://api.pushbullet.com/v2/pushes',\
+		json={'type': 'note', 'title': header, 'body': message},\
+		headers={'Access-Token': PUSHBULLET_API, 'Content-Type': 'application/json'})
+		if response.status_code != 200:
+			print(f"error: {response.status_code}")
 
 if __name__ == "__main__":	
 	HOSTNAME = open('/proc/sys/kernel/hostname', 'r').read().strip('\n')
@@ -73,10 +63,8 @@ if __name__ == "__main__":
 			TOKEN = parsed_json["TELEGRAM"]["TOKEN"]
 			CHAT_ID = parsed_json["TELEGRAM"]["CHAT_ID"]
 			MESSAGING_SERVICE += "- messenging: Telegram,\n"
-			tb = telebot.TeleBot(TOKEN)
 		if DISCORD_ON:
 			DISCORD_WEB = parsed_json["DISCORD"]["WEB"]
-			notifier = dn.Notifier(DISCORD_WEB)
 			MESSAGING_SERVICE += "- messenging: Discord,\n"
 		if GOTIFY_ON:
 			GOTIFY_WEB = parsed_json["GOTIFY"]["WEB"]
