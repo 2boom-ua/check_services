@@ -9,6 +9,14 @@ import time
 import requests
 from schedule import every, repeat, run_pending
 
+def getHostname():
+	hostname = ""
+	if os.path.exists('/proc/sys/kernel/hostname'):
+		with open('/proc/sys/kernel/hostname', "r") as file:
+			hostname = file.read().strip('\n')
+		file.close()
+	return hostname
+
 def send_message(message : str):
 	message = message.replace("\t", "")
 	if TELEGRAM_ON:
@@ -49,7 +57,7 @@ def send_message(message : str):
 			print("error:", e)
 
 if __name__ == "__main__":	
-	HOSTNAME = open('/proc/sys/kernel/hostname', 'r').read().strip('\n')
+	HOSTNAME = getHostname()
 	CURRENT_PATH =  os.path.dirname(os.path.realpath(__file__))
 	EXCLUDE_SERVICE = []
 	TELEGRAM_ON = DISCORD_ON = GOTIFY_ON = NTFY_ON = SLACK_ON = PUSHBULLET_ON = False
@@ -122,7 +130,7 @@ def check_services():
 	if count_service == all_services:
 		STATUS_DOT = f"{GREEN_DOT}"
 	result_services = all_services - count_service
-	MESSAGE = f"{STATUS_DOT} monitoring service(s):\n|ALL| - {all_services}, |OK| - {count_service}, |BAD| - {result_services}\n{bad_service_list} "
+	MESSAGE = f"{STATUS_DOT} monitoring service(s):\n|ALL| - {all_services}, |OK| - {count_service}, |BAD| - {result_services}\n{bad_service_list}"
 	new_status_str = "".join(li)
 	if old_status_str != new_status_str:
 		with open(TMP_FILE, "w") as file:	
