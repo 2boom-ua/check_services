@@ -124,10 +124,9 @@ def check_services():
 		else:
 			CURRENT_STATUS[i] = "1"
 			bad_service_list += f"{RED_DOT} *{service[i]}*: inactive!\n"
-	if count_service == all_services:
-		STATUS_DOT = f"{GREEN_DOT}"
+	if count_service == all_services: STATUS_DOT = GREEN_DOT
 	result_services = all_services - count_service
-	MESSAGE = f"{STATUS_DOT} monitoring service(s):\n|ALL| - {all_services}, |OK| - {count_service}, |BAD| - {result_services}\n{bad_service_list}"
+	MESSAGE = f"{STATUS_DOT} monitoring service(s):\n|ALL| - {all_services}, |OK| - {count_service}, |BAD| - {result_services}\n{bad_service_list}".lstrip()
 	new_status_str = "".join(CURRENT_STATUS)
 	if old_status_str != new_status_str:
 		with open(TMP_FILE, "w") as file:	
