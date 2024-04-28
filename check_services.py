@@ -14,7 +14,6 @@ def getHostname():
 	if os.path.exists('/proc/sys/kernel/hostname'):
 		with open('/proc/sys/kernel/hostname', "r") as file:
 			hostname = file.read().strip('\n')
-		file.close()
 	return hostname
 
 def send_message(message : str):
@@ -104,7 +103,7 @@ def check_services():
 	DIR_PATH = "/etc/systemd/system/multi-user.target.wants"
 	TMP_FILE = "/tmp/status_service.tmp"
 	STATUS_DOT, RED_DOT, GREEN_DOT = "", "\U0001F534", "\U0001F7E2"
-	service = []
+	CURRENT_STATUS = service = []
 	count_service = all_services = result_services = 0
 	MESSAGE = old_status_str = new_status_str = bad_service_list = ""
 	service = [file for file in os.listdir(DIR_PATH) if os.path.isfile(os.path.join(DIR_PATH, file)) and file.endswith('.service')]
@@ -114,28 +113,25 @@ def check_services():
 		with open(TMP_FILE, "w") as file:
 			old_status_str = "0" * len(service)
 			file.write(old_status_str)
-		file.close()
 	with open(TMP_FILE, "r") as file:
 		old_status_str = file.read()
-	file.close()
-	li = list(old_status_str)
+	CURRENT_STATUS = list(old_status_str)
 	for i in range(all_services):
 		check = subprocess.run(["systemctl", "is-active", service[i]], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 		if check.stdout == b"active\n":
 			count_service += 1
-			li[i] = "0"
+			CURRENT_STATUS[i] = "0"
 		else:
-			li[i] = "1"
+			CURRENT_STATUS[i] = "1"
 			bad_service_list += f"{RED_DOT} *{service[i]}*: inactive!\n"
 	if count_service == all_services:
 		STATUS_DOT = f"{GREEN_DOT}"
 	result_services = all_services - count_service
 	MESSAGE = f"{STATUS_DOT} monitoring service(s):\n|ALL| - {all_services}, |OK| - {count_service}, |BAD| - {result_services}\n{bad_service_list}"
-	new_status_str = "".join(li)
+	new_status_str = "".join(CURRENT_STATUS)
 	if old_status_str != new_status_str:
 		with open(TMP_FILE, "w") as file:	
 			file.write(new_status_str)
-		file.close()
 		send_message(f"*{HOSTNAME}* (services)\n{MESSAGE}")
 while True:
     run_pending()
