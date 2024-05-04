@@ -9,12 +9,14 @@ import time
 import requests
 from schedule import every, repeat, run_pending
 
+
 def getHostname():
 	hostname = ""
 	if os.path.exists('/proc/sys/kernel/hostname'):
 		with open('/proc/sys/kernel/hostname', "r") as file:
 			hostname = file.read().strip('\n')
 	return hostname
+
 
 def send_message(message : str):
 	message = message.replace("\t", "")
@@ -55,12 +57,14 @@ def send_message(message : str):
 		except requests.exceptions.RequestException as e:
 			print("error:", e)
 
+
 if __name__ == "__main__":	
 	HOSTNAME = getHostname()
 	CURRENT_PATH =  os.path.dirname(os.path.realpath(__file__))
 	EXCLUDE_SERVICE = []
 	TELEGRAM_ON = DISCORD_ON = GOTIFY_ON = NTFY_ON = SLACK_ON = PUSHBULLET_ON = False
 	TOKEN = CHAT_ID = DISCORD_WEB = GOTIFY_WEB = GOTIFY_TOKEN = NTFY_WEB = NTFY_SUB = PUSHBULLET_API = SLACK_WEB = MESSAGING_SERVICE = ""
+	OLD_STATUS = ""
 	if os.path.exists(f"{CURRENT_PATH}/exlude_service.json"):
 		parsed_json = json.loads(open(f"{CURRENT_PATH}/exlude_service.json", "r").read())
 		EXCLUDE_SERVICE = parsed_json["list"]
@@ -98,24 +102,20 @@ if __name__ == "__main__":
 	else:
 		print("config.json not found")
 
+
 @repeat(every(MIN_REPEAT).minutes)
 def check_services():
 	DIR_PATH = "/etc/systemd/system/multi-user.target.wants"
-	TMP_FILE = "/tmp/status_service.tmp"
 	STATUS_DOT, RED_DOT, GREEN_DOT = "", "\U0001F534", "\U0001F7E2"
 	CURRENT_STATUS = service = []
+	global OLD_STATUS 
 	count_service = all_services = result_services = 0
-	MESSAGE = old_status_str = new_status_str = bad_service_list = ""
+	MESSAGE = NEW_STATUS = bad_service_list = ""
 	service = [file for file in os.listdir(DIR_PATH) if os.path.isfile(os.path.join(DIR_PATH, file)) and file.endswith('.service')]
 	service = list(set(service) - set(EXCLUDE_SERVICE))
 	all_services = len(service)
-	if not os.path.exists(TMP_FILE) or len(service) != os.path.getsize(TMP_FILE):
-		with open(TMP_FILE, "w") as file:
-			old_status_str = "0" * len(service)
-			file.write(old_status_str)
-	with open(TMP_FILE, "r") as file:
-		old_status_str = file.read()
-	CURRENT_STATUS = list(old_status_str)
+	if len(OLD_STATUS) == 0: OLD_STATUS = "0" * len(service)
+	CURRENT_STATUS = list(OLD_STATUS)
 	for i in range(all_services):
 		check = subprocess.run(["systemctl", "is-active", service[i]], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 		if check.stdout == b"active\n":
@@ -127,11 +127,12 @@ def check_services():
 	if count_service == all_services: STATUS_DOT = GREEN_DOT
 	result_services = all_services - count_service
 	MESSAGE = f"{STATUS_DOT} monitoring service(s):\n|ALL| - {all_services}, |OK| - {count_service}, |BAD| - {result_services}\n{bad_service_list}".lstrip()
-	new_status_str = "".join(CURRENT_STATUS)
-	if old_status_str != new_status_str:
-		with open(TMP_FILE, "w") as file:	
-			file.write(new_status_str)
+	NEW_STATUS = "".join(CURRENT_STATUS)
+	if OLD_STATUS != NEW_STATUS:
+		OLD_STATUS = NEW_STATUS
 		send_message(f"*{HOSTNAME}* (services)\n{MESSAGE}")
+
+
 while True:
     run_pending()
     time.sleep(1)
