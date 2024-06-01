@@ -61,14 +61,14 @@ def SendMessage(message : str):
 if __name__ == "__main__":	
 	hostname = getHostname()
 	current_path =  os.path.dirname(os.path.realpath(__file__))
-	exclude_service = []
+	exclude_services = []
 	telegram_on = discord_on = gotify_on = ntfy_on = slack_on = pushbullet_on = False
 	token = chat_id = discord_web = gotify_web = gotify_token = ntfy_web = ntfy_sub = pushbullet_api = slack_web = messaging_service = ""
 	old_status = ""
 	if os.path.exists(f"{current_path}/exlude_service.json"):
 		with open(f"{current_path}/exlude_service.json", "r") as file:
 			parsed_json = json.loads(file.read())
-		exclude_service = parsed_json["list"]
+		exclude_services = parsed_json["list"]
 	if os.path.exists(f"{current_path}/config.json"):
 		with open(f"{current_path}/config.json", "r") as file:
 			parsed_json = json.loads(file.read())
@@ -109,23 +109,23 @@ if __name__ == "__main__":
 def check_services():
 	dir_path = "/etc/systemd/system/multi-user.target.wants"
 	status_dot, red_dot, green_dot = "", "\U0001F534", "\U0001F7E2"
-	current_status = service = []
+	current_status = services = []
 	global old_status 
 	count_service = all_services = result_services = 0
 	message = new_status = bad_service_list = ""
-	service = [file for file in os.listdir(dir_path) if os.path.isfile(os.path.join(dir_path, file)) and file.endswith('.service')]
-	service = list(set(service) - set(exclude_service))
-	all_services = len(service)
-	if len(old_status) == 0: old_status = "0" * len(service)
+	services = [file for file in os.listdir(dir_path) if os.path.isfile(os.path.join(dir_path, file)) and file.endswith('.service')]
+	services = list(set(services) - set(exclude_services))
+	all_services = len(services)
+	if len(old_status) == 0: old_status = "0" * len(services)
 	current_status = list(old_status)
-	for i in range(all_services):
-		check = subprocess.run(["systemctl", "is-active", service[i]], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+	for i, service in enumerate(services):
+		check = subprocess.run(["systemctl", "is-active", service], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 		if check.stdout == b"active\n":
 			count_service += 1
 			current_status[i] = "0"
 		else:
 			current_status[i] = "1"
-			bad_service_list += f"{red_dot} *{service[i]}*: inactive!\n"
+			bad_service_list += f"{red_dot} *{service}*: inactive!\n"
 	if count_service == all_services: status_dot = green_dot
 	result_services = all_services - count_service
 	message = f"{status_dot} monitoring service(s):\n|ALL| - {all_services}, |OK| - {count_service}, |BAD| - {result_services}\n{bad_service_list}".lstrip()
