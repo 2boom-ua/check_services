@@ -116,7 +116,7 @@ def check_services():
 	services = [file for file in os.listdir(dir_path) if os.path.isfile(os.path.join(dir_path, file)) and file.endswith('.service')]
 	services = list(set(services) - set(exclude_services))
 	all_services = len(services)
-	if len(old_status) == 0: old_status = "0" * len(services)
+	if not old_status: old_status = "0" * len(services)
 	current_status = list(old_status)
 	for i, service in enumerate(services):
 		check = subprocess.run(["systemctl", "is-active", service], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
