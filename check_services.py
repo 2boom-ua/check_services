@@ -18,51 +18,56 @@ def getHostname():
 	return hostname
 
 
-def SendMessage(message : str):
-	message = message.replace("\t", "")
+def sendMessage(message : str):
 	if telegram_on:
 		try:
-			response = requests.post(f"https://api.telegram.org/bot{token}/sendMessage", json={"chat_id": chat_id, "text": message, "parse_mode": "Markdown"})
+			for telegram_token, telegram_chat_id in zip(telegram_tokens, telegram_chat_ids):
+				requests.post(f"https://api.telegram.org/bot{telegram_token}/sendMessage", json = {"chat_id": telegram_chat_id, "text": message, "parse_mode": "Markdown"})
 		except requests.exceptions.RequestException as e:
 			print("error:", e)
 	if discord_on:
 		try:
-			response = requests.post(discord_web, json={"content": message.replace("*", "**")})
+			for discord_token in discord_tokens:
+				requests.post(f"https://discord.com/api/webhooks/{discord_token}", json = {"content": message.replace("*", "**")})
 		except requests.exceptions.RequestException as e:
-			print("error:", e)
+			print("Error:", e)
 	if slack_on:
 		try:
-			response = requests.post(slack_web, json = {"text": message})
+			for slack_token in slack_tokens:
+				requests.post(f"https://hooks.slack.com/services/{slack_token}", json = {"text": message})
 		except requests.exceptions.RequestException as e:
-			print("error:", e)
+			print("Error:", e)
 	message = message.replace("*", "")
 	header = message[:message.index("\n")].rstrip("\n")
 	message = message[message.index("\n"):].strip("\n")
 	if gotify_on:
 		try:
-			response = requests.post(f"{gotify_web}/message?token={gotify_token}",\
-			json={'title': header, 'message': message, 'priority': 0})
+			for gotify_chat_web, gotify_token in zip(gotify_chat_webs, gotify_tokens):
+				requests.post(f"{gotify_chat_web}/message?token={gotify_token}",\
+				json={'title': header, 'message': message, 'priority': 0})
 		except requests.exceptions.RequestException as e:
-			print("error:", e)
+			print("Error:", e)
 	if ntfy_on:
 		try:
-			response = requests.post(f"{ntfy_web}/{ntfy_sub}", data=message.encode(encoding='utf-8'), headers={"Title": header})
+			for ntfy_chat_web, ntfy_token in zip(ntfy_chat_webs, ntfy_tokens):
+				requests.post(f"{ntfy_chat_web}/{ntfy_token}", data = message.encode(encoding = 'utf-8'), headers = {"title": header})
 		except requests.exceptions.RequestException as e:
-			print("error:", e)
+			print("Error:", e)
 	if pushbullet_on:
 		try:
-			response = requests.post('https://api.pushbullet.com/v2/pushes',\
-			json={'type': 'note', 'title': header, 'body': message},\
-			headers={'Access-Token': pushbullet_api, 'Content-Type': 'application/json'})
+			for pushbullet_token in pushbullet_tokens:
+				requests.post('https://api.pushbullet.com/v2/pushes',\
+				json = {'type': 'note', 'title': header, 'body': message},\
+				headers = {'Access-Token': pushbullet_token, 'Content-Type': 'application/json'})
 		except requests.exceptions.RequestException as e:
-			print("error:", e)
+			print("Error:", e)
 
 if __name__ == "__main__":	
 	hostname = getHostname()
+	header = f"*{hostname}* (services)\n"
 	current_path =  os.path.dirname(os.path.realpath(__file__))
 	exclude_services = []
-	telegram_on = discord_on = gotify_on = ntfy_on = slack_on = pushbullet_on = False
-	token = chat_id = discord_web = gotify_web = gotify_token = ntfy_web = ntfy_sub = pushbullet_api = slack_web = messaging_service = ""
+	monitoring_mg = ""
 	old_status = ""
 	if os.path.exists(f"{current_path}/exlude_service.json"):
 		with open(f"{current_path}/exlude_service.json", "r") as file:
@@ -78,28 +83,28 @@ if __name__ == "__main__":
 		pushbullet_on = parsed_json["PUSHBULLET"]["ON"]
 		slack_on = parsed_json["SLACK"]["ON"]
 		if telegram_on:
-			token = parsed_json["TELEGRAM"]["TOKEN"]
-			chat_id = parsed_json["TELEGRAM"]["CHAT_ID"]
-			messaging_service += "- messenging: Telegram,\n"
+			telegram_tokens = parsed_json["TELEGRAM"]["TOKENS"]
+			telegram_chat_ids = parsed_json["TELEGRAM"]["CHAT_IDS"]
+			monitoring_mg += "- messenging: Telegram,\n"
 		if discord_on:
-			discord_web = parsed_json["DISCORD"]["WEB"]
-			messaging_service += "- messenging: Discord,\n"
-		if gotify_on:
-			gotify_web = parsed_json["GOTIFY"]["WEB"]
-			gotify_token = parsed_json["GOTIFY"]["TOKEN"]
-			messaging_service += "- messenging: Gotify,\n"
-		if ntfy_on:
-			ntfy_web = parsed_json["NTFY"]["WEB"]
-			ntfy_sub = parsed_json["NTFY"]["SUB"]
-			messaging_service += "- messenging: Ntfy,\n"
-		if pushbullet_on:
-			pushbullet_api = parsed_json["PUSHBULLET"]["API"]
-			messaging_service += "- messenging: Pushbullet,\n"
+			discord_tokens = parsed_json["DISCORD"]["TOKENS"]
+			monitoring_mg += "- messenging: Discord,\n"
 		if slack_on:
-			slack_web = parsed_json["SLACK"]["WEB"]
-			messaging_service += "- messenging: Slack,\n"
+			slack_tokens = parsed_json["SLACK"]["TOKENS"]
+			monitoring_mg += "- messenging: Slack,\n"
+		if gotify_on:
+			gotify_tokens = parsed_json["GOTIFY"]["TOKENS"]
+			gotify_chat_webs = parsed_json["GOTIFY"]["CHAT_WEB"]
+			monitoring_mg += "- messenging: Gotify,\n"
+		if ntfy_on:
+			ntfy_tokens = parsed_json["NTFY"]["TOKENS"]
+			ntfy_chat_webs = parsed_json["NTFY"]["CHAT_WEB"]
+			monitoring_mg += "- messenging: Ntfy,\n"
+		if pushbullet_on:
+			pushbullet_tokens = parsed_json["PUSHBULLET"]["TOKENS"]
+			monitoring_mg += "- messenging: Pushbullet,\n"
 		min_repeat = int(parsed_json["MIN_REPEAT"])
-		SendMessage(f"*{hostname}* (services)\nservices monitor:\n{messaging_service}- polling period: {min_repeat} minute(s).")
+		sendMessage(f"{header}services monitor:\n{monitoring_mg}- polling period: {min_repeat} minute(s).")
 	else:
 		print("config.json not found")
 
@@ -115,7 +120,7 @@ def check_services():
 	services = [file for file in os.listdir(dir_path) if os.path.isfile(os.path.join(dir_path, file)) and file.endswith('.service')]
 	services = list(set(services) - set(exclude_services))
 	all_services = len(services)
-	if not old_status: old_status = "0" * len(services)
+	if not old_status or len(services) != len(old_status): old_status = "0" * len(services)	
 	current_status = list(old_status)
 	for i, service in enumerate(services):
 		check = subprocess.run(["systemctl", "is-active", service], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -131,7 +136,7 @@ def check_services():
 	new_status = "".join(current_status)
 	if old_status != new_status:
 		old_status = new_status
-		SendMessage(f"*{hostname}* (services)\n{message}")
+		sendMessage(f"{header}{message}")
 
 
 while True:
