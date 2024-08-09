@@ -44,7 +44,7 @@ pip install -r requirements.txt
             "second tocken",
             "...."
         ],
-        "CHAT_WEB": [
+        "CHAT_URLS": [
             "first server_url",
             "second server_url",
             "...."
@@ -57,7 +57,7 @@ pip install -r requirements.txt
             "second tocken",
             "...."
         ],
-        "CHAT_WEB": [
+        "CHAT_URLS": [
             "first server_url",
             "second server_url",
             "...."
