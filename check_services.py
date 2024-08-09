@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
-# Copyright (c) 2boom 2023-24
+# Copyright: 2boom 2023-24
 
 import json
 import os.path
@@ -18,49 +18,48 @@ def getHostname():
 	return hostname
 
 
-def sendMessage(message : str):
+def send_message(message: str):
+	def send_request(url, json_data=None, data=None, headers=None):
+		try:
+			response = requests.post(url, json=json_data, data=data, headers=headers)
+			response.raise_for_status()
+		except requests.exceptions.RequestException as e:
+			print(f"Error sending message: {e}")
 	if telegram_on:
-		try:
-			for telegram_token, telegram_chat_id in zip(telegram_tokens, telegram_chat_ids):
-				requests.post(f"https://api.telegram.org/bot{telegram_token}/sendMessage", json = {"chat_id": telegram_chat_id, "text": message, "parse_mode": "Markdown"})
-		except requests.exceptions.RequestException as e:
-			print("error:", e)
+		for token, chat_id in zip(telegram_tokens, telegram_chat_ids):
+			url = f"https://api.telegram.org/bot{token}/sendMessage"
+			json_data = {"chat_id": chat_id, "text": message, "parse_mode": "Markdown"}
+			send_request(url, json_data)
 	if discord_on:
-		try:
-			for discord_token in discord_tokens:
-				requests.post(f"https://discord.com/api/webhooks/{discord_token}", json = {"content": message.replace("*", "**")})
-		except requests.exceptions.RequestException as e:
-			print("Error:", e)
+		for token in discord_tokens:
+			url = f"https://discord.com/api/webhooks/{token}"
+			json_data = {"content": message.replace("*", "**")}
+			send_request(url, json_data)
 	if slack_on:
-		try:
-			for slack_token in slack_tokens:
-				requests.post(f"https://hooks.slack.com/services/{slack_token}", json = {"text": message})
-		except requests.exceptions.RequestException as e:
-			print("Error:", e)
-	message = message.replace("*", "")
-	header = message[:message.index("\n")].rstrip("\n")
-	message = message[message.index("\n"):].strip("\n")
+		for token in slack_tokens:
+			url = f"https://hooks.slack.com/services/{token}"
+			json_data = {"text": message}
+			send_request(url, json_data)
+	header, message = message.replace("*", "").split("\n", 1)
+	message = message.strip()
 	if gotify_on:
-		try:
-			for gotify_chat_web, gotify_token in zip(gotify_chat_webs, gotify_tokens):
-				requests.post(f"{gotify_chat_web}/message?token={gotify_token}",\
-				json={'title': header, 'message': message, 'priority': 0})
-		except requests.exceptions.RequestException as e:
-			print("Error:", e)
+		for token, chat_url in zip(gotify_tokens, gotify_chat_urls):
+			url = f"{chat_url}/message?token={token}"
+			json_data = {'title': header, 'message': message, 'priority': 0}
+			send_request(url, json_data)
 	if ntfy_on:
-		try:
-			for ntfy_chat_web, ntfy_token in zip(ntfy_chat_webs, ntfy_tokens):
-				requests.post(f"{ntfy_chat_web}/{ntfy_token}", data = message.encode(encoding = 'utf-8'), headers = {"title": header})
-		except requests.exceptions.RequestException as e:
-			print("Error:", e)
+		for token, chat_url in zip(ntfy_tokens, ntfy_chat_urls):
+			url = f"{chat_url}/{token}"
+			data_data = message.encode(encoding = 'utf-8')
+			headers_data = {"title": header}
+			send_request(url, None, data_data, headers_data)
 	if pushbullet_on:
-		try:
-			for pushbullet_token in pushbullet_tokens:
-				requests.post('https://api.pushbullet.com/v2/pushes',\
-				json = {'type': 'note', 'title': header, 'body': message},\
-				headers = {'Access-Token': pushbullet_token, 'Content-Type': 'application/json'})
-		except requests.exceptions.RequestException as e:
-			print("Error:", e)
+		for token in pushbullet_tokens:
+			url = "https://api.pushbullet.com/v2/pushes"
+			json_data = {'type': 'note', 'title': header, 'body': message}
+			headers_data = {'Access-Token': token, 'Content-Type': 'application/json'}
+			send_request(url, json_data, None, headers_data)
+
 
 if __name__ == "__main__":	
 	hostname = getHostname()
@@ -76,28 +75,17 @@ if __name__ == "__main__":
 	if os.path.exists(f"{current_path}/config.json"):
 		with open(f"{current_path}/config.json", "r") as file:
 			parsed_json = json.loads(file.read())
-		telegram_on, discord_on, gotify_on = parsed_json["TELEGRAM"]["ON"], parsed_json["DISCORD"]["ON"], parsed_json["GOTIFY"]["ON"]
-		ntfy_on, pushbullet_on, slack_on = parsed_json["NTFY"]["ON"], parsed_json["PUSHBULLET"]["ON"], parsed_json["SLACK"]["ON"]
-		if telegram_on:
-			telegram_tokens, telegram_chat_ids = parsed_json["TELEGRAM"]["TOKENS"], parsed_json["TELEGRAM"]["CHAT_IDS"]
-			monitoring_mg += "- messenging: Telegram,\n"
-		if discord_on:
-			discord_tokens = parsed_json["DISCORD"]["TOKENS"]
-			monitoring_mg += "- messenging: Discord,\n"
-		if slack_on:
-			slack_tokens = parsed_json["SLACK"]["TOKENS"]
-			monitoring_mg += "- messenging: Slack,\n"
-		if gotify_on:
-			gotify_tokens, gotify_chat_webs = parsed_json["GOTIFY"]["TOKENS"], parsed_json["GOTIFY"]["CHAT_WEB"]
-			monitoring_mg += "- messenging: Gotify,\n"
-		if ntfy_on:
-			ntfy_tokens, ntfy_chat_webs = parsed_json["NTFY"]["TOKENS"], parsed_json["NTFY"]["CHAT_WEB"]
-			monitoring_mg += "- messenging: Ntfy,\n"
-		if pushbullet_on:
-			pushbullet_tokens = parsed_json["PUSHBULLET"]["TOKENS"]
-			monitoring_mg += "- messenging: Pushbullet,\n"
+		telegram_on, discord_on, gotify_on, ntfy_on, pushbullet_on, slack_on = (parsed_json[key]["ON"] for key in ["TELEGRAM", "DISCORD", "GOTIFY", "NTFY", "PUSHBULLET", "SLACK"])
+		services = {
+		"TELEGRAM": ["TOKENS", "CHAT_IDS"], "DISCORD": ["TOKENS"], "SLACK": ["TOKENS"],
+		"GOTIFY": ["TOKENS", "CHAT_URLS"], "NTFY": ["TOKENS", "CHAT_URLS"], "PUSHBULLET": ["TOKENS"]
+		}
+		for service, keys in services.items():
+			if parsed_json[service]["ON"]:
+				globals().update({f"{service.lower()}_{key.lower()}": parsed_json[service][key] for key in keys})
+				monitoring_mg += f"- messaging: {service.capitalize()},\n"
 		min_repeat = int(parsed_json["MIN_REPEAT"])
-		sendMessage(f"{header}services monitor:\n{monitoring_mg}- polling period: {min_repeat} minute(s).")
+		send_message(f"{header}services monitor:\n{monitoring_mg}- polling period: {min_repeat} minute(s).")
 	else:
 		print("config.json not found")
 
@@ -129,7 +117,7 @@ def check_services():
 	new_status = "".join(current_status)
 	if old_status != new_status:
 		old_status = new_status
-		sendMessage(f"{header}{message}")
+		send_message(f"{header}{message}")
 
 
 while True:
