@@ -1,5 +1,5 @@
 # check_services
-services status informer for Telegram, Discord, Gotify, Ntfy, Pushbullet? Slack  as linux service
+services status informer for Telegram, Discord, Gotify, Ntfy, Pushbullet, Pushover, Slack  as linux service
 
 ```
 pip install -r requirements.txt
@@ -68,6 +68,19 @@ pip install -r requirements.txt
         "TOKENS": [
             "first tocken",
             "second tocken",
+            "...."
+        ]
+    },
+    "PUSHOVER": {
+        "ON": true,
+        "TOKENS": [
+            "first tocken",
+            "second tocken",
+            "...."
+        ],
+        "USER_KEYS": [
+            "first user_key",
+            "second user_key",
             "...."
         ]
     },
