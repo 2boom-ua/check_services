@@ -59,6 +59,11 @@ def send_message(message: str):
 			json_data = {'type': 'note', 'title': header, 'body': message}
 			headers_data = {'Access-Token': token, 'Content-Type': 'application/json'}
 			send_request(url, json_data, None, headers_data)
+	if pushover_on:
+		for token, user_key in zip(pushover_tokens, pushover_user_keys):
+			url = "https://api.pushover.net/1/messages.json"
+			json_data = {"token": token, "user": user_key, "message": message, "title": header}
+			send_request(url, json_data)
 
 
 if __name__ == "__main__":	
@@ -75,10 +80,10 @@ if __name__ == "__main__":
 	if os.path.exists(f"{current_path}/config.json"):
 		with open(f"{current_path}/config.json", "r") as file:
 			parsed_json = json.loads(file.read())
-		telegram_on, discord_on, gotify_on, ntfy_on, pushbullet_on, slack_on = (parsed_json[key]["ON"] for key in ["TELEGRAM", "DISCORD", "GOTIFY", "NTFY", "PUSHBULLET", "SLACK"])
+		telegram_on, discord_on, gotify_on, ntfy_on, pushbullet_on, pushover_on, slack_on = (parsed_json[key]["ON"] for key in ["TELEGRAM", "DISCORD", "GOTIFY", "NTFY", "PUSHBULLET", "PUSHOVER", "SLACK"])
 		services = {
 		"TELEGRAM": ["TOKENS", "CHAT_IDS"], "DISCORD": ["TOKENS"], "SLACK": ["TOKENS"],
-		"GOTIFY": ["TOKENS", "CHAT_URLS"], "NTFY": ["TOKENS", "CHAT_URLS"], "PUSHBULLET": ["TOKENS"]
+		"GOTIFY": ["TOKENS", "CHAT_URLS"], "NTFY": ["TOKENS", "CHAT_URLS"], "PUSHBULLET": ["TOKENS"], "PUSHOVER": ["TOKENS", "USER_KEYS"]
 		}
 		for service, keys in services.items():
 			if parsed_json[service]["ON"]:
