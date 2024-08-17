@@ -12,9 +12,10 @@ from schedule import every, repeat, run_pending
 
 def getHostname():
 	hostname = ""
-	if os.path.exists('/proc/sys/kernel/hostname'):
-		with open('/proc/sys/kernel/hostname', "r") as file:
-			hostname = file.read().strip('\n')
+	hostname_path = '/proc/sys/kernel/hostname'
+	if os.path.exists(hostname_path):
+		with open(hostname_path, "r") as file:
+			hostname = file.read().strip()
 	return hostname
 
 
@@ -110,7 +111,7 @@ def check_services():
 	current_status = list(old_status)
 	for i, service in enumerate(services):
 		check = subprocess.run(["systemctl", "is-active", service], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-		if check.stdout == b"active\n":
+		if check.returncode == 0 and check.stdout == b"active\n":
 			count_service += 1
 			current_status[i] = "0"
 		else:
