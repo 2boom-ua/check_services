@@ -11,6 +11,7 @@ from schedule import every, repeat, run_pending
 
 
 def getHostname():
+	"""Get the hostname."""
 	hostname = ""
 	hostname_path = '/proc/sys/kernel/hostname'
 	if os.path.exists(hostname_path):
@@ -20,6 +21,7 @@ def getHostname():
 
 
 def send_message(message: str):
+	"""Send notifications to various messaging services (Telegram, Discord, Slack, Gotify, Ntfy, Pushbullet, Pushover)."""
 	def send_request(url, json_data=None, data=None, headers=None):
 		try:
 			response = requests.post(url, json=json_data, data=data, headers=headers)
@@ -67,7 +69,8 @@ def send_message(message: str):
 			send_request(url, json_data)
 
 
-if __name__ == "__main__":	
+if __name__ == "__main__":
+	"""Load configuration and initialize monitoring"""
 	hostname = getHostname()
 	header = f"*{hostname}* (services)\n"
 	current_path =  os.path.dirname(os.path.realpath(__file__))
@@ -82,10 +85,8 @@ if __name__ == "__main__":
 		with open(f"{current_path}/config.json", "r") as file:
 			parsed_json = json.loads(file.read())
 		telegram_on, discord_on, gotify_on, ntfy_on, pushbullet_on, pushover_on, slack_on = (parsed_json[key]["ON"] for key in ["TELEGRAM", "DISCORD", "GOTIFY", "NTFY", "PUSHBULLET", "PUSHOVER", "SLACK"])
-		services = {
-		"TELEGRAM": ["TOKENS", "CHAT_IDS"], "DISCORD": ["TOKENS"], "SLACK": ["TOKENS"],
-		"GOTIFY": ["TOKENS", "CHAT_URLS"], "NTFY": ["TOKENS", "CHAT_URLS"], "PUSHBULLET": ["TOKENS"], "PUSHOVER": ["TOKENS", "USER_KEYS"]
-		}
+		services = {"TELEGRAM": ["TOKENS", "CHAT_IDS"], "DISCORD": ["TOKENS"], "SLACK": ["TOKENS"],"GOTIFY": ["TOKENS", "CHAT_URLS"],
+			"NTFY": ["TOKENS", "CHAT_URLS"], "PUSHBULLET": ["TOKENS"], "PUSHOVER": ["TOKENS", "USER_KEYS"]}
 		for service, keys in services.items():
 			if parsed_json[service]["ON"]:
 				globals().update({f"{service.lower()}_{key.lower()}": parsed_json[service][key] for key in keys})
@@ -98,6 +99,7 @@ if __name__ == "__main__":
 
 @repeat(every(min_repeat).minutes)
 def check_services():
+	"""Periodically check for services status"""
 	dir_path = "/etc/systemd/system/multi-user.target.wants"
 	status_dot, red_dot, green_dot = "", "\U0001F534", "\U0001F7E2"
 	current_status = services = []
