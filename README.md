@@ -84,6 +84,7 @@ pip install -r requirements.txt
             "...."
         ]
     },
+    "DEFAULT_DOT_STYLE": true,
     "MIN_REPEAT": 1
 }
 ```
