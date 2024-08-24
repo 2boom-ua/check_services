@@ -10,7 +10,7 @@ import requests
 from schedule import every, repeat, run_pending
 
 
-def get_hostname():
+def getHostname():
 	"""Get the hostname."""
 	hostname = ""
 	hostname_path = '/proc/sys/kernel/hostname'
@@ -71,7 +71,7 @@ def send_message(message: str):
 
 if __name__ == "__main__":
 	"""Load configuration and initialize monitoring"""
-	hostname = get_hostname()
+	hostname = getHostname()
 	header = f"*{hostname}* (services)\n"
 	current_path =  os.path.dirname(os.path.realpath(__file__))
 	exclude_services = []
