@@ -20,9 +20,10 @@ def getHostname():
 	return hostname
 
 
-def send_message(message: str):
-	"""Send notifications to various messaging services (Telegram, Discord, Slack, Gotify, Ntfy, Pushbullet, Pushover)."""
-	def send_request(url, json_data=None, data=None, headers=None):
+def SendMessage(message: str):
+	"""Send notifications to various messaging services (Telegram, Discord, Slack, Gotify, Ntfy, Pushbullet, Pushover, Matrix)."""
+	def SendRequest(url, json_data=None, data=None, headers=None):
+		"""Send an HTTP POST request and handle exceptions."""
 		try:
 			response = requests.post(url, json=json_data, data=data, headers=headers)
 			response.raise_for_status()
@@ -32,41 +33,50 @@ def send_message(message: str):
 		for token, chat_id in zip(telegram_tokens, telegram_chat_ids):
 			url = f"https://api.telegram.org/bot{token}/sendMessage"
 			json_data = {"chat_id": chat_id, "text": message, "parse_mode": "Markdown"}
-			send_request(url, json_data)
+			SendRequest(url, json_data)
 	if discord_on:
 		for token in discord_tokens:
 			url = f"https://discord.com/api/webhooks/{token}"
 			json_data = {"content": message.replace("*", "**")}
-			send_request(url, json_data)
+			SendRequest(url, json_data)
 	if slack_on:
 		for token in slack_tokens:
 			url = f"https://hooks.slack.com/services/{token}"
 			json_data = {"text": message}
-			send_request(url, json_data)
+			SendRequest(url, json_data)
+	if matrix_on:
+		for token, server_url, room_id in zip(matrix_tokens, matrix_server_urls, matrix_room_ids):
+			url = f"{server_url}/_matrix/client/r0/rooms/{room_id}/send/m.room.message?access_token={token}"
+			matrix_message = "<br>".join(string.replace('*', '<b>', 1).replace('*', '</b>', 1) for string in message.split("\n"))
+			json_data = {"msgtype": "m.text", "body": matrix_message, "format": "org.matrix.custom.html", "formatted_body": matrix_message}
+			headers_data = {"Content-Type": "application/json"}
+			SendRequest(url, json_data, None, headers_data)
+	
 	header, message = message.replace("*", "").split("\n", 1)
 	message = message.strip()
+
 	if gotify_on:
 		for token, chat_url in zip(gotify_tokens, gotify_chat_urls):
 			url = f"{chat_url}/message?token={token}"
 			json_data = {'title': header, 'message': message, 'priority': 0}
-			send_request(url, json_data)
+			SendRequest(url, json_data)
 	if ntfy_on:
 		for token, chat_url in zip(ntfy_tokens, ntfy_chat_urls):
 			url = f"{chat_url}/{token}"
 			data_data = message.encode(encoding = 'utf-8')
 			headers_data = {"title": header}
-			send_request(url, None, data_data, headers_data)
+			SendRequest(url, None, data_data, headers_data)
 	if pushbullet_on:
 		for token in pushbullet_tokens:
 			url = "https://api.pushbullet.com/v2/pushes"
 			json_data = {'type': 'note', 'title': header, 'body': message}
 			headers_data = {'Access-Token': token, 'Content-Type': 'application/json'}
-			send_request(url, json_data, None, headers_data)
+			SendRequest(url, json_data, None, headers_data)
 	if pushover_on:
 		for token, user_key in zip(pushover_tokens, pushover_user_keys):
 			url = "https://api.pushover.net/1/messages.json"
 			json_data = {"token": token, "user": user_key, "message": message, "title": header}
-			send_request(url, json_data)
+			SendRequest(url, json_data)
 
 
 if __name__ == "__main__":
@@ -90,21 +100,21 @@ if __name__ == "__main__":
 		if not default_dot_style:
 			dots = square_dot
 		green_dot, red_dot = dots["green"], dots["red"]
-		telegram_on, discord_on, gotify_on, ntfy_on, pushbullet_on, pushover_on, slack_on = (parsed_json[key]["ON"] for key in ["TELEGRAM", "DISCORD", "GOTIFY", "NTFY", "PUSHBULLET", "PUSHOVER", "SLACK"])
+		telegram_on, discord_on, gotify_on, ntfy_on, pushbullet_on, pushover_on, slack_on, matrix_on = (parsed_json[key]["ON"] for key in ["TELEGRAM", "DISCORD", "GOTIFY", "NTFY", "PUSHBULLET", "PUSHOVER", "SLACK", "MATRIX"])
 		services = {"TELEGRAM": ["TOKENS", "CHAT_IDS"], "DISCORD": ["TOKENS"], "SLACK": ["TOKENS"],"GOTIFY": ["TOKENS", "CHAT_URLS"],
-			"NTFY": ["TOKENS", "CHAT_URLS"], "PUSHBULLET": ["TOKENS"], "PUSHOVER": ["TOKENS", "USER_KEYS"]}
+			"NTFY": ["TOKENS", "CHAT_URLS"], "PUSHBULLET": ["TOKENS"], "PUSHOVER": ["TOKENS", "USER_KEYS"], "MATRIX": ["TOKENS", "SERVER_URLS", "ROOM_IDS"]}
 		for service, keys in services.items():
 			if parsed_json[service]["ON"]:
 				globals().update({f"{service.lower()}_{key.lower()}": parsed_json[service][key] for key in keys})
 				monitoring_mg += f"- messaging: {service.capitalize()},\n"
 		min_repeat = int(parsed_json["MIN_REPEAT"])
-		send_message(f"{header}services monitor:\n{monitoring_mg}- polling period: {min_repeat} minute(s).")
+		SendMessage(f"{header}services monitor:\n{monitoring_mg}- polling period: {min_repeat} minute(s).")
 	else:
 		print("config.json not found")
 
 
 @repeat(every(min_repeat).minutes)
-def check_services():
+def CheckServices():
 	"""Periodically check for services status"""
 	dir_path = "/etc/systemd/system/multi-user.target.wants"
 	status_dot = ""
@@ -131,7 +141,7 @@ def check_services():
 	new_status = "".join(current_status)
 	if old_status != new_status:
 		old_status = new_status
-		send_message(f"{header}{message}")
+		SendMessage(f"{header}{message}")
 
 
 while True:
