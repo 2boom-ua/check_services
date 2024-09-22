@@ -1,11 +1,43 @@
-# check_services
-services status informer for Telegram, Discord, Gotify, Ntfy, Pushbullet, Pushover, Slack, Matrix  as linux service
+# Service Monitoring Script
+
+## Overview
+
+This Python script monitors the status of system services on a Linux machine. It checks the services managed by `systemd`, sending notifications through various messaging services when changes occur. 
+
+## Features
+
+- **Service Status Monitoring:** Regularly checks if specified services are active or inactive.
+- **Notifications:** Sends alerts via:
+  - Telegram
+  - Discord
+  - Slack
+  - Gotify
+  - Ntfy
+  - Pushbullet
+  - Pushover
+  - Matrix
+- **Configuration:** Easily configurable through JSON files for notification settings and excluded services.
+- **Polling Period:** Adjustable polling interval to check service status.
+
+
+## Requirements
+- Python 3.x
+- Docker installed and running
+- Dependencies: `requests`, `schedule`
+
+### Clone the repository:
+```
+git clone https://github.com/2boom-ua/check_services.git
+cd check_services
+```
+### Install required Python packages:
 
 ```
 pip install -r requirements.txt
 ```
 
-**config.json**
+### Edit config.json:
+A **config.json** file in the same directory as the script, and include your API tokens and configuration settings.
 ```
 {
     "TELEGRAM": {
@@ -106,10 +138,14 @@ pip install -r requirements.txt
     "MIN_REPEAT": 1
 }
 ```
-**make as service**
+## Running as a Linux Service
+You can set this script to run as a Linux service for continuous monitoring.
+
+Create a systemd service file:
 ```
 nano /etc/systemd/system/check_services.service
 ```
+Add the following content:
 ```
 [Unit]
 Description=services state change monitor
@@ -132,3 +168,11 @@ systemctl enable check_services.service
 ```
 systemctl start check_services.service
 ```
+
+## License
+
+This project is licensed under the MIT License - see the [MIT License](https://opensource.org/licenses/MIT) for details.
+
+## Author
+
+- **2boom** - [GitHub](https://github.com/2boom-ua)
