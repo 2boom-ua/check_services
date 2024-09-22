@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
-# Copyright: 2boom 2023-24
+"""Copyright (c) 2024 2boom. This project is licensed under the MIT License - see the [MIT License](https://opensource.org/licenses/MIT) for details."""
 
 import json
 import os.path
