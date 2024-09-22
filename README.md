@@ -1,10 +1,10 @@
-# Service Monitoring Script
+## Service Monitoring Script
 
-## Overview
+### Overview
 
 This Python script monitors the status of system services on a Linux machine. It checks the services managed by `systemd`, sending notifications through various messaging services when changes occur. 
 
-## Features
+### Features
 
 - **Service Status Monitoring:** Regularly checks if specified services are active or inactive.
 - **Notifications:** Sends alerts via:
@@ -20,7 +20,7 @@ This Python script monitors the status of system services on a Linux machine. It
 - **Polling Period:** Adjustable polling interval to check service status.
 
 
-## Requirements
+### Requirements
 - Python 3.x
 - Docker installed and running
 - Dependencies: `requests`, `schedule`
