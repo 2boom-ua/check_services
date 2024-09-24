@@ -7,7 +7,7 @@ This Python script monitors the status of system services on a Linux machine. It
 ### Features
 
 - **Service Status Monitoring:** Regularly checks if specified services are active or inactive.
-- **Notifications:** Sends alerts via:
+- **Real-time notifications with support for multiple accounts** via:
   - Telegram
   - Discord
   - Slack
