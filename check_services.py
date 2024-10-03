@@ -21,7 +21,7 @@ def getHostname():
 
 
 def SendMessage(message: str):
-	"""Send notifications to various messaging services (Telegram, Discord, Slack, Gotify, Ntfy, Pushbullet, Pushover, Matrix)."""
+	"""Send notifications to various messaging services (Telegram, Discord, Slack, Gotify, Ntfy, Pushbullet, Pushover, Matrix, Mattermost, Rocket.chat)."""
 	def SendRequest(url, json_data=None, data=None, headers=None):
 		"""Send an HTTP POST request and handle exceptions."""
 		try:
@@ -29,32 +29,29 @@ def SendMessage(message: str):
 			response.raise_for_status()
 		except requests.exceptions.RequestException as e:
 			print(f"Error sending message: {e}")
-
+	
 	if telegram_on:
 		for token, chat_id in zip(telegram_tokens, telegram_chat_ids):
 			url = f"https://api.telegram.org/bot{token}/sendMessage"
 			json_data = {"chat_id": chat_id, "text": message, "parse_mode": "Markdown"}
 			SendRequest(url, json_data)
 	if discord_on:
-		for webhook_url in discord_webhook_urls:
-			url = webhook_url
+		for url in discord_webhook_urls:
 			json_data = {"content": message.replace("*", "**")}
 			SendRequest(url, json_data)
 	if mattermost_on:
-		for webhook_url in mattermost_webhook_urls:
-			url = webhook_url
+		for url in mattermost_webhook_urls:
 			json_data = {'text': message.replace("*", "**")}
 			SendRequest(url, json_data)
 	if slack_on:
-		for webhook_url in slack_webhook_urls:
-			url = webhook_url
+		for url in slack_webhook_urls:
 			json_data = {"text": message}
 			SendRequest(url, json_data)
 	if matrix_on:
 		for token, server_url, room_id in zip(matrix_tokens, matrix_server_urls, matrix_room_ids):
 			url = f"{server_url}/_matrix/client/r0/rooms/{room_id}/send/m.room.message?access_token={token}"
-			formated_message = "<br>".join(string.replace('*', '<b>', 1).replace('*', '</b>', 1) for string in message.split("\n"))
-			json_data = {"msgtype": "m.text", "body": formated_message, "format": "org.matrix.custom.html", "formatted_body": formated_message}
+			tmp_message = "<br>".join(string.replace('*', '<b>', 1).replace('*', '</b>', 1) for string in message.split("\n"))
+			json_data = {"msgtype": "m.text", "body": tmp_message, "format": "org.matrix.custom.html", "formatted_body": tmp_message}
 			SendRequest(url, json_data)
 	if rocket_on:
 		for token, server_url, user_id, channel in zip(rocket_tokens, rocket_server_urls,rocket_user_ids, rocket_channel_ids):
@@ -65,15 +62,14 @@ def SendMessage(message: str):
 	
 	header, message = message.replace("*", "").split("\n", 1)
 	message = message.strip()
-
+	
 	if gotify_on:
 		for token, server_url in zip(gotify_tokens, gotify_server_urls):
 			url = f"{server_url}/message?token={token}"
 			json_data = {'title': header, 'message': message, 'priority': 0}
 			SendRequest(url, json_data)
 	if ntfy_on:
-		for webhook_url in ntfy_webhook_urls:
-			url = webhook_url
+		for url in ntfy_webhook_urls:
 			encoded_message = message.encode(encoding = 'utf-8')
 			headers_data = {"title": header}
 			SendRequest(url, None, encoded_message, headers_data)
