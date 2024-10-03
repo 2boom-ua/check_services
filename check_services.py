@@ -41,14 +41,13 @@ def SendMessage(message: str):
 			json_data = {"content": message.replace("*", "**")}
 			SendRequest(url, json_data)
 	if mattermost_on:
-		for chat_url in mattermost_chat_urls:
-			url = chat_url
+		for webhook_url in mattermost_webhook_urls:
+			url = webhook_url
 			json_data = {'text': message.replace("*", "**")}
-			headers_data = {'Content-Type': 'application/json'}
-			SendRequest(url, json_data, None, headers_data)
+			SendRequest(url, json_data)
 	if slack_on:
-		for token in slack_tokens:
-			url = f"https://hooks.slack.com/services/{token}"
+		for webhook_url in slack_webhook_urls:
+			url = webhook_url
 			json_data = {"text": message}
 			SendRequest(url, json_data)
 	if matrix_on:
@@ -56,10 +55,9 @@ def SendMessage(message: str):
 			url = f"{server_url}/_matrix/client/r0/rooms/{room_id}/send/m.room.message?access_token={token}"
 			formated_message = "<br>".join(string.replace('*', '<b>', 1).replace('*', '</b>', 1) for string in message.split("\n"))
 			json_data = {"msgtype": "m.text", "body": formated_message, "format": "org.matrix.custom.html", "formatted_body": formated_message}
-			headers_data = {"Content-Type": "application/json"}
-			SendRequest(url, json_data, None, headers_data)
+			SendRequest(url, json_data)
 	if rocket_on:
-		for token, server_url, user_id, channel in zip(rocket_tokens, rocket_server_urls,rocket_user_ids, rocket_channels):
+		for token, server_url, user_id, channel in zip(rocket_tokens, rocket_server_urls,rocket_user_ids, rocket_channel_ids):
 			url = f"{server_url}/api/v1/chat.postMessage"
 			headers_data = {"X-Auth-Token": token, "X-User-Id": user_id, "Content-Type": "application/json"}
 			json_data = {"channel": channel, "text": message}
@@ -69,13 +67,13 @@ def SendMessage(message: str):
 	message = message.strip()
 
 	if gotify_on:
-		for token, chat_url in zip(gotify_tokens, gotify_chat_urls):
-			url = f"{chat_url}/message?token={token}"
+		for token, server_url in zip(gotify_tokens, gotify_server_urls):
+			url = f"{server_url}/message?token={token}"
 			json_data = {'title': header, 'message': message, 'priority': 0}
 			SendRequest(url, json_data)
 	if ntfy_on:
-		for token, chat_url in zip(ntfy_tokens, ntfy_chat_urls):
-			url = f"{chat_url}/{token}"
+		for webhook_url in ntfy_webhook_urls:
+			url = webhook_url
 			encoded_message = message.encode(encoding = 'utf-8')
 			headers_data = {"title": header}
 			SendRequest(url, None, encoded_message, headers_data)
@@ -115,8 +113,18 @@ if __name__ == "__main__":
 		green_dot, red_dot = dots["green"], dots["red"]
 		messaging_platforms = ["TELEGRAM", "DISCORD", "GOTIFY", "NTFY", "PUSHBULLET", "PUSHOVER", "SLACK", "MATRIX", "MATTERMOST", "ROCKET"]
 		telegram_on, discord_on, gotify_on, ntfy_on, pushbullet_on, pushover_on, slack_on, matrix_on, mattermost_on, rocket_on = (parsed_json[key]["ON"] for key in messaging_platforms)
-		services = {"TELEGRAM": ["TOKENS", "CHAT_IDS"], "DISCORD": ["WEBHOOK_URLS"], "SLACK": ["TOKENS"],"GOTIFY": ["TOKENS", "CHAT_URLS"], "NTFY": ["TOKENS", "CHAT_URLS"], "PUSHBULLET": ["TOKENS"],
-		"PUSHOVER": ["TOKENS", "USER_KEYS"], "MATRIX": ["TOKENS", "SERVER_URLS", "ROOM_IDS"], "MATTERMOST": ["CHAT_URLS"], "ROCKET": ["TOKENS", "SERVER_URLS", "USER_IDS", "CHANNELS"]}
+		services = {
+			"TELEGRAM": ["TOKENS", "CHAT_IDS"],
+			"DISCORD": ["WEBHOOK_URLS"],
+			"SLACK": ["WEBHOOK_URLS"],
+			"GOTIFY": ["TOKENS", "SERVER_URLS"],
+			"NTFY": ["WEBHOOK_URLS"],
+			"PUSHBULLET": ["TOKENS"],
+			"PUSHOVER": ["TOKENS", "USER_KEYS"],
+			"MATRIX": ["TOKENS", "SERVER_URLS", "ROOM_IDS"],
+			"MATTERMOST": ["WEBHOOK_URLS"],
+			"ROCKET": ["TOKENS", "SERVER_URLS", "USER_IDS", "CHANNEL_IDS"]
+		}
 		for service, keys in services.items():
 			if parsed_json[service]["ON"]:
 				globals().update({f"{service.lower()}_{key.lower()}": parsed_json[service][key] for key in keys})
