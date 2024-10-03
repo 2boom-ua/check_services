@@ -171,6 +171,11 @@ A **config.json** file in the same directory as the script, and include your API
     "MIN_REPEAT": 1
 }
 ```
+| Item   | Required   | Description   |
+|------------|------------|------------|
+| DEFAULT_DOT_STYLE | true/false | Round/Square dots. |
+| SEC_REPEAT | 1 | Set the poll period in seconds. Minimum is 1 minute. | 
+
 ## Running as a Linux Service
 You can set this script to run as a Linux service for continuous monitoring.
 
