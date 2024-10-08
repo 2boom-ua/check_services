@@ -2,9 +2,10 @@
 <div align="center">  
     <img src="https://github.com/2boom-ua/check_services/blob/main/check_services.jpg?raw=true" alt="" width="260" height="168">
 </div>
+
 ### Overview
 
-This Python script monitors the status of system services on a Linux machine. It checks the services managed by `systemd`, sending notifications through various messaging services when changes occur. 
+This Python script monitors the status of system services on a Linux machine. It checks the services managed by `systemd`, forwarding notifications through various messaging services when the crevice status changes detected. 
 
 ### Features
 
