@@ -119,6 +119,43 @@
             "...."
         ]
     },
+    "FLOCK": {
+        "ON": false,
+        "WEBHOOK_URLS": [
+            "first url",
+            "second url",
+            "...."
+		]
+    },
+    "PUMBLE": {
+        "ON": false,
+        "WEBHOOK_URLS": [
+            "first url",
+            "second url",
+            "...."
+		]
+    },
+    "ZULIP": {
+        "ON": false,
+        "WEBHOOK_URLS": [
+            "first url",
+            "second url",
+            "...."
+		]
+    },
+    "CUSTOM": {
+        "ON": false,
+        "WEBHOOK_URLS": [
+            "first url",
+            "second url",
+            "...."
+		]
+        "STD_BOLDS" : [
+            true,
+            false,
+            "...."
+                ]
+    },
     "DEFAULT_DOT_STYLE": true,
     "MIN_REPEAT": 1
 }
