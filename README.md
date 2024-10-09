@@ -21,6 +21,10 @@ This Python script monitors the status of system services on a Linux machine. It
   - Rocket.chat
   - Matrix
   - Mattermost
+  - Floc
+  - Pumble
+  - Zulip
+  - Custom webhook
 - **Configuration:** Easily configurable through JSON files for notification settings and excluded services.
 - **Polling Period:** Adjustable polling interval to check service status.
 
@@ -165,12 +169,52 @@ A **config.json** file in the same directory as the script, and include your API
             "...."
         ]
     },
+    "FLOCK": {
+        "ON": false,
+        "WEBHOOK_URLS": [
+            "first url",
+            "second url",
+            "...."
+		]
+    },
+    "PUMBLE": {
+        "ON": false,
+        "WEBHOOK_URLS": [
+            "first url",
+            "second url",
+            "...."
+		]
+    },
+    "ZULIP": {
+        "ON": false,
+        "WEBHOOK_URLS": [
+            "first url",
+            "second url",
+            "...."
+		]
+    },
+    "CUSTOM": {
+        "ON": false,
+        "WEBHOOK_URLS": [
+            "first url",
+            "second url",
+            "...."
+		]
+        "STD_BOLDS" : [
+            true,
+            false,
+            "...."
+                ]
+    },
     "DEFAULT_DOT_STYLE": true,
     "MIN_REPEAT": 1
 }
 ```
 | Item   | Required   | Description   |
 |------------|------------|------------|
+| STD_BOLDS | true/false | "**" **standard Markdown**, "*" *non-standard Markdown* |
+| | | Standard Markdown use - Pumble, Mattermost, Discord, Ntfy, Gotify |
+| | | Non-standard Markdown use - Telegram, Zulip, Flock, Slack, RocketChat, Flock. |
 | DEFAULT_DOT_STYLE | true/false | Round/Square dots. |
 | MIN_REPEAT | 1 | Set the poll period in minutes. Minimum is 1 minute. | 
 
