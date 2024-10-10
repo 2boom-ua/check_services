@@ -10,7 +10,7 @@ import requests
 from schedule import every, repeat, run_pending
 
 
-def getHostname():
+def getHostname() -> str:
 	"""Get the hostname."""
 	hostname = ""
 	hostname_path = '/proc/sys/kernel/hostname'
