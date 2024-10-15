@@ -219,7 +219,7 @@ A **config.json** file in the same directory as the script, and include your API
 | MIN_REPEAT | 1 | Set the poll period in minutes. Minimum is 1 minute. | 
 
 ### Edit exlude_service.json:
-A **exlude_service.json** file in the same directory as the script, include the name of the services that aren't monitored.
+A **exlude_service.json** file in the same directory as the script, include the name of the services that aren't monitored. ***the presence of the file is not necessary***
 ```
 {
    "list": [
