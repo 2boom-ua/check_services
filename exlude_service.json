@@ -1,7 +1,7 @@
 {
    "list": [
-      "fisrtservicename.service"
-      "secondservicename.service"
+      "fisrtservicename.service",
+      "secondservicename.service",
       "..."
    ]
 }
