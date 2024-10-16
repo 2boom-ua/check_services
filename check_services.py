@@ -20,6 +20,30 @@ def getHostname() -> str:
 	return hostname
 
 
+def FirstCheckServices() -> dict:
+	"""Periodically check for services status"""
+	dir_path = "/etc/systemd/system/multi-user.target.wants"
+	monitoring_services = {"work": 0, "exclude": 0}
+	current_status = services = []
+	global old_status 
+	services = [file for file in os.listdir(dir_path) if os.path.isfile(os.path.join(dir_path, file)) and file.endswith('.service')]
+	services = list(set(services) - set(exclude_services))
+	monitoring_services["work"] = len(services)
+	monitoring_services["exclude"] = len(exclude_services)
+	if not old_status or len(services) != len(old_status): old_status = "0" * len(services)	
+	current_status = list(old_status)
+	for i, service in enumerate(services):
+		check = subprocess.run(["systemctl", "is-active", service], capture_output=True, text=True)
+		if check.returncode == 0 and check.stdout.strip() == "active":
+			current_status[i] = "0"
+		else:
+			current_status[i] = "1"
+	new_status = "".join(current_status)
+	if old_status != new_status:
+		old_status = new_status
+	return monitoring_services
+
+
 def SendMessage(message: str):
 	"""Send notifications to various messaging services (Telegram, Discord, Gotify, Ntfy, Pushbullet, Pushover, Matrix, Zulip, Flock, Slack, RocketChat, Pumble, Mattermost, CUSTOM)."""
 	"""CUSTOM - single_asterisks - Zulip, Flock, Slack, RocketChat, Flock, double_asterisks - Pumble, Mattermost """
@@ -145,8 +169,11 @@ if __name__ == "__main__":
 			if parsed_json[service]["ON"]:
 				globals().update({f"{service.lower()}_{key.lower()}": parsed_json[service][key] for key in keys})
 				monitoring_mg += f"- messaging: {service.capitalize()},\n"
+		count_services = FirstCheckServices()
+		mon_services = count_services["work"]
+		exc_services = count_services["exclude"]
 		min_repeat = int(parsed_json["MIN_REPEAT"])
-		SendMessage(f"{header}services monitor:\n{monitoring_mg}- default dot style: {default_dot_style},\n- polling period: {min_repeat} minute(s).")
+		SendMessage(f"{header}services monitor:\n{monitoring_mg}- monitoring: {mon_services}({exc_services}) services,\n- default dot style: {default_dot_style},\n- polling period: {min_repeat} minute(s).")
 	else:
 		print("config.json not found")
 
@@ -166,8 +193,8 @@ def CheckServices():
 	if not old_status or len(services) != len(old_status): old_status = "0" * len(services)	
 	current_status = list(old_status)
 	for i, service in enumerate(services):
-		check = subprocess.run(["systemctl", "is-active", service], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-		if check.returncode == 0 and check.stdout == b"active\n":
+		check = subprocess.run(["systemctl", "is-active", service], capture_output=True, text=True)
+		if check.returncode == 0 and check.stdout.strip() == "active":
 			count_service += 1
 			current_status[i] = "0"
 		else:
