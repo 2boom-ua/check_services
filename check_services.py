@@ -21,7 +21,7 @@ def getHostname() -> str:
 
 
 def FirstCheckServices() -> dict:
-	"""Periodically check for services status"""
+	"""first start and intitals values"""
 	dir_path = "/etc/systemd/system/multi-user.target.wants"
 	monitoring_services = {"work": 0, "exclude": 0}
 	current_status = services = []
