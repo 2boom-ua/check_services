@@ -222,7 +222,7 @@ A **config.json** file in the same directory as the script, and include your API
 A **exlude_service.json** file in the same directory as the script, include the name of the services that aren't monitored. ***the presence of the file is not necessary***
 ```
 {
-   "list": [
+   "LIST": [
       "fisrtservicename.service",
       "secondservicename.service",
       "..."
