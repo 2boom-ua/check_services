@@ -39,12 +39,23 @@ def SendMessage(message: str):
 		except requests.exceptions.RequestException as e:
 			print(f"Error sending message: {e}")
 			
-	def toHTMLformat(message: str) -> str:
+	def toHTMLFormat(message: str) -> str:
 		"""Format the message with bold text and HTML line breaks."""
 		formatted_message = ""
 		for i, string in enumerate(message.split('*')):
 			formatted_message += f"<b>{string}</b>" if i % 2 else string
 		formatted_message = formatted_message.replace("\n", "<br>")
+		return formatted_message
+		
+	def toMarkdownFormat(message: str, m_format: str) -> str:
+		"""Converts a message into a specified format (either Markdown, HTML, or plain text"""
+		formatted_message = ""
+		formatters = {
+			"markdown": lambda msg: msg.replace("*", "**"),
+			"html": toHTMLFormat,
+			"text": lambda msg: msg.replace("*", ""),
+			}
+		formatted_message = formatters.get(m_format, lambda msg: msg)(message)
 		return formatted_message
 
 	if telegram_on:
@@ -71,7 +82,7 @@ def SendMessage(message: str):
 	if matrix_on:
 		for token, server_url, room_id in zip(matrix_tokens, matrix_server_urls, matrix_room_ids):
 			url = f"{server_url}/_matrix/client/r0/rooms/{room_id}/send/m.room.message?access_token={token}"
-			formatted_message = toHTMLformat(message)
+			formatted_message = toHTMLFormat(message)
 			json_data = {"msgtype": "m.text", "body": formatted_message, "format": "org.matrix.custom.html", "formatted_body": formatted_message}
 			SendRequest(url, json_data)
 	if discord_on:
@@ -82,7 +93,7 @@ def SendMessage(message: str):
 	if mattermost_on:
 		for url in mattermost_webhook_urls:
 			formatted_message = message.replace("*", "**")
-			json_data = {'text': formatted_message}
+			json_data = {"text": formatted_message}
 			SendRequest(url, json_data)
 	if pumble_on:
 		for url in pumble_webhook_urls:
@@ -90,31 +101,32 @@ def SendMessage(message: str):
 			json_data = {"text": formatted_message}
 			SendRequest(url, json_data)
 	if apprise_on:
-		for url, mformat in zip(apprise_webhook_urls, apprise_formats):
+		for url, format_message in zip(apprise_webhook_urls, apprise_format_messages):
 			"""apprise_formats - markdown/html/text."""
-			headers_data = {"Content-Type": "application/json"}
-			formatters = {
-				"markdown": lambda msg: msg.replace("*", "**"),
-				"html": toHTMLformat,
-				"text": lambda msg: msg.replace("*", ""),
-			}
-			formatted_message = formatters.get(mformat, lambda msg: msg)(message)
-			json_data = {"body": formatted_message, "type": "info", "format": mformat}
-			SendRequest(url, json_data, None, headers_data)
-	if custom_on:
-		for url, content_name, mformat in zip(custom_webhook_urls, custom_content_names, custom_formats):
-			"""custom_name - text/body/content/message/..., custom_format - markdown/html/text/asterisk(non standard markdown - default)."""
-			formatters = {
-				"markdown": lambda msg: msg.replace("*", "**"),
-				"html": toHTMLformat,
-				"text": lambda msg: msg.replace("*", ""),
-			}
-			formatted_message = formatters.get(mformat, lambda msg: msg)(message)
-			json_data[content_name] = formatted_message
+			formatted_message = toMarkdownFormat(message, format_message)
+			json_data = {"body": formatted_message, "type": "info", "format": format_message}
 			SendRequest(url, json_data)
+	if custom_on:
+		"""custom_name - text/body/formatted_body/content/message/..., custom_format - markdown/html/text/asterisk(non standard markdown - default)."""
+		message_str_format = ["text", "content", "message", "body", "formatted_body", "data"]
+		for url, header, pyload, format_message in zip(custom_webhook_urls, custom_headers, custom_pyloads, custom_format_messages):
+			data, ntfy = None, False
+			formated_message = toMarkdownFormat(message, format_message)
+			header_json = header if header else None
+			for key in list(pyload.keys()):
+				if key == "title":
+					header, formated_message = formated_message.split("\n", 1)
+					pyload[key] = header.replace("*", "")
+					if pyload[key] == "extras":
+						formated_message = formated_message.replace("\n", "\n\n")
+				pyload[key] = formated_message if key in message_str_format else pyload[key]
+				if key == "data": ntfy = True
+			pyload_json = None if ntfy else pyload
+			data = formated_message.encode("utf-8") if ntfy else None
+			SendRequest(url, pyload_json, data, header_json)
 	if ntfy_on:
 		for url in ntfy_webhook_urls:
-			headers_data = {"Markdown": "yes"}
+			headers_data = {"Content-Type": "application/json", "Markdown": "yes"}
 			formatted_message = message.replace("*", "**").encode(encoding = "utf-8")
 			SendRequest(url, None, formatted_message, headers_data)
 	
@@ -125,22 +137,22 @@ def SendMessage(message: str):
 			url = f"{server_url}/message?token={token}"
 			formatted_message = message.replace("*", "**").replace("\n", "\n\n")
 			formatted_header = header.replace("*", "")
-			json_data = {'title': formatted_header, "message": formatted_message, "priority": 0, "extras": {"client::display": {"contentType": "text/markdown"}}}
+			json_data = {"title": formatted_header, "message": formatted_message, "priority": 0, "extras": {"client::display": {"contentType": "text/markdown"}}}
 			SendRequest(url, json_data)
 	if pushover_on:
 		for token, user_key in zip(pushover_tokens, pushover_user_keys):
 			url = "https://api.pushover.net/1/messages.json"
-			formatted_message = toHTMLformat(message)
+			formatted_message = toHTMLFormat(message)
 			formatted_header = header.replace("*", "")
-			json_data = {"token": token, "user": user_key, "message": formatted_message, "title": formatted_header, "html": "1"}
+			json_data = {"token": token, "user": user_key, "title": formatted_header, "message": formatted_message, "html": "1"}
 			SendRequest(url, json_data)
 	if pushbullet_on:
 		for token in pushbullet_tokens:
 			url = "https://api.pushbullet.com/v2/pushes"
 			formatted_header = header.replace("*", "")
 			formatted_message = message.replace("*", "")
-			json_data = {'type': 'note', 'title': formatted_header, 'body': formatted_message}
-			headers_data = {'Access-Token': token, 'Content-Type': 'application/json'}
+			json_data = {"type": "note", "title": formatted_header, "body": formatted_message}
+			headers_data = {"Access-Token": token, "Content-Type": "application/json"}
 			SendRequest(url, json_data, None, headers_data)
 
 
@@ -180,8 +192,8 @@ if __name__ == "__main__":
 			"ROCKET": ["WEBHOOK_URLS"],
 			"ZULIP": ["WEBHOOK_URLS"],
 			"FLOCK": ["WEBHOOK_URLS"],
-			"APPRISE": ["WEBHOOK_URLS", "FORMATS"],
-			"CUSTOM": ["WEBHOOK_URLS", "CONTENT_NAMES", "FORMATS"]
+			"APPRISE": ["WEBHOOK_URLS", "FORMAT_MESSAGES"],
+			"CUSTOM": ["WEBHOOK_URLS", "HEADERS", "PYLOADS", "FORMAT_MESSAGES"]
 		}
 		for service, keys in services.items():
 			if config_json[service]["ENABLED"]:
