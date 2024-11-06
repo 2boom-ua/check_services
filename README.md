@@ -429,13 +429,13 @@ A **config.json** file in the same directory as the script, and include your API
 
 ```
  "DEFAULT_DOT_STYLE": true,
-    "MIN_REPEAT": 15
+    "MIN_REPEAT": 1
 ```
 
 | Item   | Required   | Description   |
 |------------|------------|------------|
 | DEFAULT_DOT_STYLE | true/false | Round/Square dots. |
-| MIN_REPEAT | 15 | Set the poll period in minutes. Minimum is 1 minute. | 
+| MIN_REPEAT | 1 | Set the poll period in minutes. Minimum is 1 minute. | 
 
 
 ## Edit exlude_service.json:
