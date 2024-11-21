@@ -1,4 +1,5 @@
 import json
+import sys
 import os.path
 import subprocess
 import time
@@ -29,30 +30,33 @@ def FetchServiceStatus() -> tuple:
 	
 
 def SendMessage(message: str):
+	"""Internal function to send HTTP POST requests with error handling"""
 	def SendRequest(url, json_data=None, data=None, headers=None):
 		try:
 			response = requests.post(url, json=json_data, data=data, headers=headers)
 			response.raise_for_status()
 		except requests.exceptions.RequestException as e:
 			print(f"Error sending message: {e}")
-
+	
+	"""Converts the message to HTML format by replacing Markdown-like syntax"""
 	def toHTMLFormat(message: str) -> str:
 		formatted_message = ""
 		for i, string in enumerate(message.split('*')):
 			formatted_message += f"<b>{string}</b>" if i % 2 else string
 		formatted_message = formatted_message.replace("\n", "<br>")
 		return formatted_message
-		
-	def toMarkdownFormat(message: str, m_format: str) -> str:
-		formatted_message = ""
-		formatters = {
-			"markdown": lambda msg: msg.replace("*", "**"),
-			"html": toHTMLFormat,
-			"text": lambda msg: msg.replace("*", ""),
-			}
-		formatted_message = formatters.get(m_format, lambda msg: msg)(message)
-		return formatted_message
 
+	"""Converts the message to the specified format (HTML, Markdown, or plain text)"""
+	def toMarkdownFormat(message: str, m_format: str) -> str:
+		if m_format == "html":
+			return toHTMLFormat(message)
+		elif m_format == "markdown":
+			return message.replace("*", "**")
+		elif m_format == "text":
+			return message.replace("*", "")
+		return message
+
+	"""Iterate through multiple platform configurations"""
 	for url, header, pyload, format_message in zip(platform_webhook_url, platform_header, platform_pyload, platform_format_message):
 		data, ntfy = None, False
 		formated_message = toMarkdownFormat(message, format_message)
@@ -70,6 +74,7 @@ def SendMessage(message: str):
 			pyload[key] = formated_message if key in ["text", "content", "message", "body", "formatted_body", "data"] else pyload[key]
 		pyload_json = None if ntfy else pyload
 		data = formated_message.encode("utf-8") if ntfy else None
+		"""Send the request with the appropriate payload and headers"""
 		SendRequest(url, pyload_json, data, header_json)
 
 
@@ -100,7 +105,6 @@ if __name__ == "__main__":
 		green_dot, red_dot = dots["green"], dots["red"]
 		no_messaging_keys = ["DEFAULT_DOT_STYLE", "MIN_REPEAT"]
 		messaging_platforms = list(set(config_json) - set(no_messaging_keys))
-		globals().update({f"{key.lower()}_on": config_json[key]["ENABLED"] for key in messaging_platforms})
 		for platform in messaging_platforms:
 			if config_json[platform].get("ENABLED", False):
 				for key, value in config_json[platform].items():
@@ -123,9 +127,10 @@ if __name__ == "__main__":
 			SendMessage(f"{header}services monitor:\n{monitoring_message}")
 		else:
 			print("config.json is wrong")
-			exit(1)
+			sys.exit(1)
 	else:
 		print("config.json not found")
+		sys.exit(1)
 
 
 @repeat(every(min_repeat).minutes)
