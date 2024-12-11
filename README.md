@@ -25,6 +25,7 @@ This Python script monitors the status of system services on a Linux machine. It
   - Pumble
   - Zulip
   - Apprise
+  - Webntfy
   - Custom webhook
 - **Configuration:** Easily configurable through JSON files for notification settings and excluded services.
 - **Polling Period:** Adjustable polling interval to check service status.
