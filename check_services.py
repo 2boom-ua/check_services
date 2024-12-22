@@ -80,12 +80,13 @@ if __name__ == "__main__":
     hostname = getHostname()
     header = f"*{hostname}* (systemd)\n"
     config_file = os.path.join(os.path.dirname(os.path.realpath(__file__)), "config.json")
+    exclude_file = os.path.join(os.path.dirname(os.path.realpath(__file__)), "exlude_service.json")
     exclude_services = []
     monitoring_message = ""
     dots = {"green": "\U0001F7E2", "red": "\U0001F534"}
     square_dot = {"green": "\U0001F7E9", "red": "\U0001F7E5"}
-    if os.path.exists(f"{current_path}/exlude_service.json"):
-        with open(f"{current_path}/exlude_service.json", "r") as file:
+    if os.path.exists(exclude_file):
+        with open(exclude_file, "r") as file:
             excluded_json = json.loads(file.read())
         exclude_services = excluded_json["LIST"]
     if os.path.exists(config_file):
