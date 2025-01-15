@@ -77,8 +77,6 @@ def SendMessage(message: str):
 
 if __name__ == "__main__":
     """Load configuration and initialize monitoring"""
-    hostname = getHostname()
-    header = f"*{hostname}* (systemd)\n"
     config_file = os.path.join(os.path.dirname(os.path.realpath(__file__)), "config.json")
     exclude_file = os.path.join(os.path.dirname(os.path.realpath(__file__)), "exlude_service.json")
     exclude_services = []
@@ -93,15 +91,19 @@ if __name__ == "__main__":
         with open(config_file, "r") as file:
             config_json = json.loads(file.read())
         try:
+            hostname = config_json.get("HOST_NAME", "")
             default_dot_style = config_json.get("DEFAULT_DOT_STYLE", True)
             min_repeat = max(int(config_json.get("MIN_REPEAT", 1)), 1)
         except (json.JSONDecodeError, ValueError, TypeError, KeyError):
             default_dot_style = True
             min_repeat = 1
+        if not hostname:
+            hostname = getHostName()
+        header = f"*{hostname}* (systemd)\n"
         if not default_dot_style:
             dots = square_dot
         green_dot, red_dot = dots["green"], dots["red"]
-        no_messaging_keys = ["DEFAULT_DOT_STYLE", "MIN_REPEAT"]
+        no_messaging_keys = ["HOST_NAME", "DEFAULT_DOT_STYLE", "MIN_REPEAT"]
         messaging_platforms = list(set(config_json) - set(no_messaging_keys))
         for platform in messaging_platforms:
             if config_json[platform].get("ENABLED", False):
