@@ -90,12 +90,14 @@ You can use any name and any number of records for each messaging platform confi
 - **text** - raw text without any styling or formatting.
 
 ```
- "DEFAULT_DOT_STYLE": true,
-    "MIN_REPEAT": 1
+"HOST_NAME": "MyHostName",
+"DEFAULT_DOT_STYLE": true,
+"MIN_REPEAT": 1
 ```
 
 | Item   | Required   | Description   |
 |------------|------------|------------|
+| HOST_NAME | string | Host or config name.|
 | DEFAULT_DOT_STYLE | true/false | Round/Square dots. |
 | MIN_REPEAT | 1 | Set the poll period in minutes. Minimum is 1 minute. | 
 
