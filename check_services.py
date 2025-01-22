@@ -1,3 +1,8 @@
+#!/usr/bin/python3
+# -*- coding: utf-8 -*-
+#Copyright (c) 2024-25 2boom.
+
+
 import json
 import sys
 import os.path
@@ -152,12 +157,14 @@ def CheckServices():
                 bad_services += 1
                 status_message = "inactive"
                 message += f"{red_dot} *{service_name}*: {status_message}!\n"
-        if bad_services == 0: message += f"{green_dot} monitoring service(s):\n"
+        if bad_services == 0:
+            message += f"{green_dot} monitoring service(s):\n"
     if old_status != new_status:
         ok_services = total_services - bad_services
         old_status = new_status
-        message += f"|ALL| - {total_services}, |OK| - {ok_services}, |BAD| - {bad_services}\n"
-        SendMessage(f"{header}{message}")
+        if message:
+            message += f"|ALL| - {total_services}, |OK| - {ok_services}, |BAD| - {bad_services}\n"
+            SendMessage(f"{header}{message}")
 
 while True:
     run_pending()
