@@ -148,14 +148,11 @@ services:
       - ./config.json:/check_services/config.json
       - ./exlude_service.json:/check_services/exlude_service.json
       - /etc/systemd/system/multi-user.target.wants:/etc/systemd/system/multi-user.target.wants:ro
-      - /var/run/dbus:/var/run/dbus
+      - /var/run/dbus:/var/run/dbus:ro
       - /run/systemd/system:/run/systemd/system:ro
-      - /sys/fs/cgroup:/sys/fs/cgroup:ro
     environment:
+      - DBUS_SYSTEM_BUS_ADDRESS=unix:path=/var/run/dbus/system_bus_socket
       - TZ=UTC
-      - TERM=xterm
-    stdin_open: true
-    tty: true
     restart: always
 ```
 
