@@ -126,13 +126,14 @@ curl -L -o ./exlude_service.json  https://raw.githubusercontent.com/2boom-ua/che
 ```
 ### docker-cli
 ```bash
-docker run --privileged -t -i -v ./config.json:/check_services/config.json \
+docker run --net host --name check_services --privileged \
+-v ./config.json:/check_services/config.json \
 -v ./exlude_service.json:/check_services/exlude_service.json \
 -v /etc/systemd/system/multi-user.target.wants:/etc/systemd/system/multi-user.target.wants:ro \
--v /var/run/dbus:/var/run/dbus -v /run/systemd/system:/run/systemd/system:ro \
--v /sys/fs/cgroup:/sys/fs/cgroup:ro \
---name check_services \
--e TZ=Europe/Kyiv -e TERM=xterm \
+-v /var/run/dbus:/var/run/dbus:ro \
+-v /run/systemd/system:/run/systemd/system:ro \
+-e DBUS_SYSTEM_BUS_ADDRESS=unix:path=/var/run/dbus/system_bus_socket \
+-e TZ=UTC --restart always \
 ghcr.io/2boom-ua/check_services:latest 
 ```
 ### docker-compose
