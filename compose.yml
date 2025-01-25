@@ -13,7 +13,7 @@ services:
       - /run/systemd/system:/run/systemd/system:ro
       - /sys/fs/cgroup:/sys/fs/cgroup:ro
     environment:
-      - TZ=Europe/Kyiv
+      - TZ=UTC
       - TERM=xterm
     stdin_open: true
     tty: true
