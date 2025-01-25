@@ -33,7 +33,6 @@ This Python script monitors the status of system services on a Linux machine. It
 
 ### Requirements
 - Python 3.x
-- Docker installed and running
 - Dependencies: `requests`, `schedule`
 
 ### Clone the repository:
