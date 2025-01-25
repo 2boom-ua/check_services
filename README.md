@@ -35,17 +35,6 @@ This Python script monitors the status of system services on a Linux machine. It
 - Python 3.x
 - Dependencies: `requests`, `schedule`
 
-### Clone the repository:
-```
-git clone https://github.com/2boom-ua/check_services.git
-cd check_services
-```
-### Install required Python packages:
-
-```
-pip install -r requirements.txt
-```
-
 ### Edit config.json:
 You can use any name and any number of records for each messaging platform configuration, and you can also mix platforms as needed. The number of message platform configurations is unlimited.
 
@@ -89,14 +78,12 @@ You can use any name and any number of records for each messaging platform confi
 - **text** - raw text without any styling or formatting.
 
 ```
-"HOST_NAME": "MyHostName",
 "DEFAULT_DOT_STYLE": true,
 "MIN_REPEAT": 1
 ```
 
 | Item   | Required   | Description   |
 |------------|------------|------------|
-| HOST_NAME | string | Host or config name.|
 | DEFAULT_DOT_STYLE | true/false | Round/Square dots. |
 | MIN_REPEAT | 1 | Set the poll period in minutes. Minimum is 1 minute. | 
 
@@ -113,6 +100,69 @@ A **exlude_service.json** file in the same directory as the script, include the 
 }
 ```
 
+### Clone the repository:
+```
+git clone https://github.com/2boom-ua/check_services.git
+cd check_services
+```
+### Install required Python packages:
+```
+pip install -r requirements.txt
+```
+## Docker
+```bash
+  docker build -t check_services .
+```
+or
+```bash
+  docker pull ghcr.io/2boom-ua/check_services:latest
+```
+### Dowload and edit config.json and exlude_service.json
+```bash
+curl -L -o ./config.json  https://raw.githubusercontent.com/2boom-ua/check_services/main/config.json
+```
+```bash
+curl -L -o ./exlude_service.json  https://raw.githubusercontent.com/2boom-ua/check_services/main/exlude_service.json
+```
+### docker-cli
+```bash
+docker run --privileged -t -i -v ./config.json:/check_services/config.json \
+-v ./exlude_service.json:/check_services/exlude_service.json \
+-v /etc/systemd/system/multi-user.target.wants:/etc/systemd/system/multi-user.target.wants:ro \
+-v /var/run/dbus:/var/run/dbus -v /run/systemd/system:/run/systemd/system:ro \
+-v /sys/fs/cgroup:/sys/fs/cgroup:ro \
+--name check_services \
+-e TZ=Europe/Kyiv -e TERM=xterm \
+ghcr.io/2boom-ua/check_services:latest 
+```
+### docker-compose
+```
+version: "3.9"
+services:
+  check_services:
+    container_name: check_services
+    image: ghcr.io/2boom-ua/check_services:latest
+    privileged: true
+    network_mode: host
+    volumes:
+      - ./config.json:/check_services/config.json
+      - ./exlude_service.json:/check_services/exlude_service.json
+      - /etc/systemd/system/multi-user.target.wants:/etc/systemd/system/multi-user.target.wants:ro
+      - /var/run/dbus:/var/run/dbus
+      - /run/systemd/system:/run/systemd/system:ro
+      - /sys/fs/cgroup:/sys/fs/cgroup:ro
+    environment:
+      - TZ=UTC
+      - TERM=xterm
+    stdin_open: true
+    tty: true
+    restart: always
+```
+
+```bash
+docker-compose up -d
+```
+---
 ### Running as a Linux Service
 You can set this script to run as a Linux service for continuous monitoring.
 
