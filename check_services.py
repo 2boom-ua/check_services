@@ -6,12 +6,30 @@
 import json
 import sys
 import os.path
+import os
 import subprocess
 import time
 import requests
+import logging
 from schedule import every, repeat, run_pending
+from urllib.parse import urlparse
 
-def getHostname() -> str:
+
+"""Configure logging"""
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s"
+)
+logger = logging.getLogger("check_services")
+
+
+"""Get base url"""
+def GetBaseUrl(url):
+    parsed_url = urlparse(url)
+    return f"{parsed_url.scheme}://{parsed_url.netloc}...."
+
+
+def getHostName() -> str:
     """Get the hostname."""
     hostname = ""
     hostname_path = '/proc/sys/kernel/hostname'
@@ -25,7 +43,7 @@ def FetchServiceStatus() -> tuple:
     """Collects status of services"""
     dir_path = "/etc/systemd/system/multi-user.target.wants"
     services_list = []
-    services = [file for file in os.listdir(dir_path) if os.path.isfile(os.path.join(dir_path, file)) and file.endswith(".service")]
+    services = [file for file in os.listdir(dir_path) if file.endswith(".service") and os.path.islink(f"{dir_path}/{file}")]
     services = [service for service in services if service not in exclude_services]
     for service in services:
         check = subprocess.run(["systemctl", "is-active", service], capture_output=True, text=True)
@@ -40,8 +58,9 @@ def SendMessage(message: str):
         try:
             response = requests.post(url, json=json_data, data=data, headers=headers)
             response.raise_for_status()
+            logger.info(f"Message successfully sent to {GetBaseUrl(url)}. Status code: {response.status_code}")
         except requests.exceptions.RequestException as e:
-            print(f"Error sending message: {e}")
+            logger.error(f"Error sending message to {GetBaseUrl(url)}: {e}")
     
     """"Converts Markdown-like syntax to HTML format."""
     def toHTMLFormat(message: str) -> str:
@@ -56,7 +75,11 @@ def SendMessage(message: str):
             return message.replace("*", "**")
         elif m_format == "text":
             return message.replace("*", "")
-        return message
+        elif m_format == "simplified":
+            return message
+        else:
+            logger.error(f"Unknown format '{m_format}' provided. Returning original message.")
+            return message
 
     """Iterate through multiple platform configurations"""
     for url, header, pyload, format_message in zip(platform_webhook_url, platform_header, platform_pyload, platform_format_message):
@@ -96,19 +119,17 @@ if __name__ == "__main__":
         with open(config_file, "r") as file:
             config_json = json.loads(file.read())
         try:
-            hostname = config_json.get("HOST_NAME", "")
             default_dot_style = config_json.get("DEFAULT_DOT_STYLE", True)
             min_repeat = max(int(config_json.get("MIN_REPEAT", 1)), 1)
         except (json.JSONDecodeError, ValueError, TypeError, KeyError):
             default_dot_style = True
             min_repeat = 1
-        if not hostname:
-            hostname = getHostName()
+        hostname = getHostName()
         header = f"*{hostname}* (systemd)\n"
         if not default_dot_style:
             dots = square_dot
         green_dot, red_dot = dots["green"], dots["red"]
-        no_messaging_keys = ["HOST_NAME", "DEFAULT_DOT_STYLE", "MIN_REPEAT"]
+        no_messaging_keys = ["DEFAULT_DOT_STYLE", "MIN_REPEAT"]
         messaging_platforms = list(set(config_json) - set(no_messaging_keys))
         for platform in messaging_platforms:
             if config_json[platform].get("ENABLED", False):
@@ -129,12 +150,13 @@ if __name__ == "__main__":
             f"- polling period: {min_repeat} minute(s)."
         )
         if all(value in globals() for value in ["platform_webhook_url", "platform_header", "platform_pyload", "platform_format_message"]):
+            logger.info(f"Started!")
             SendMessage(f"{header}services monitor:\n{monitoring_message}")
         else:
-            print("config.json is wrong")
+            logger.error("config.json is wrong")
             sys.exit(1)
     else:
-        print("config.json not found")
+        logger.error("config.json not found")
         sys.exit(1)
 
 

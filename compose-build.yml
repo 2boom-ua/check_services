@@ -1,0 +1,25 @@
+version: "3.9"
+services:
+  check_services:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: check_services
+    image: check_services:latest
+    #image: ghcr.io/2boom-ua/check_services:latest
+    privileged: true
+    network_mode: host
+    volumes:
+      - ./config.json:/check_services/config.json
+      - ./exlude_service.json:/check_services/exlude_service.json
+      - /etc/systemd/system/multi-user.target.wants:/etc/systemd/system/multi-user.target.wants:ro
+      - /var/run/dbus:/var/run/dbus
+      - /run/systemd/system:/run/systemd/system:ro
+      - /sys/fs/cgroup:/sys/fs/cgroup:ro
+    environment:
+      - TZ=Europe/Kyiv
+      - TERM=xterm
+    stdin_open: true
+    tty: true
+    restart: always
+
