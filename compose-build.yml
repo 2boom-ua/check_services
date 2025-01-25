@@ -6,7 +6,6 @@ services:
       dockerfile: Dockerfile
     container_name: check_services
     image: check_services:latest
-    #image: ghcr.io/2boom-ua/check_services:latest
     privileged: true
     network_mode: host
     volumes:
@@ -17,7 +16,7 @@ services:
       - /run/systemd/system:/run/systemd/system:ro
       - /sys/fs/cgroup:/sys/fs/cgroup:ro
     environment:
-      - TZ=Europe/Kyiv
+      - TZ=UTC
       - TERM=xterm
     stdin_open: true
     tty: true
