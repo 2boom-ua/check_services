@@ -78,12 +78,14 @@ You can use any name and any number of records for each messaging platform confi
 - **text** - raw text without any styling or formatting.
 
 ```
+"STARTUP_MESSAGE": true,
 "DEFAULT_DOT_STYLE": true,
 "MIN_REPEAT": 1
 ```
 
 | Item   | Required   | Description   |
 |------------|------------|------------|
+| STARTUP_MESSAGE | true/false | On/Off startup message. |
 | DEFAULT_DOT_STYLE | true/false | Round/Square dots. |
 | MIN_REPEAT | 1 | Set the poll period in minutes. Minimum is 1 minute. | 
 
