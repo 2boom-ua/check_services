@@ -119,17 +119,18 @@ if __name__ == "__main__":
         with open(config_file, "r") as file:
             config_json = json.loads(file.read())
         try:
+            startup_message = config_json.get("STARTUP_MESSAGE", True)
             default_dot_style = config_json.get("DEFAULT_DOT_STYLE", True)
             min_repeat = max(int(config_json.get("MIN_REPEAT", 1)), 1)
         except (json.JSONDecodeError, ValueError, TypeError, KeyError):
-            default_dot_style = True
+            default_dot_style = startup_message = True
             min_repeat = 1
         hostname = getHostName()
         header = f"*{hostname}* (systemd)\n"
         if not default_dot_style:
             dots = square_dot
         green_dot, red_dot = dots["green"], dots["red"]
-        no_messaging_keys = ["DEFAULT_DOT_STYLE", "MIN_REPEAT"]
+        no_messaging_keys = ["STARTUP_MESSAGE", "DEFAULT_DOT_STYLE", "MIN_REPEAT"]
         messaging_platforms = list(set(config_json) - set(no_messaging_keys))
         for platform in messaging_platforms:
             if config_json[platform].get("ENABLED", False):
@@ -151,7 +152,8 @@ if __name__ == "__main__":
         )
         if all(value in globals() for value in ["platform_webhook_url", "platform_header", "platform_pyload", "platform_format_message"]):
             logger.info(f"Started!")
-            SendMessage(f"{header}services monitor:\n{monitoring_message}")
+            if startup_message:
+                SendMessage(f"{header}services monitor:\n{monitoring_message}")
         else:
             logger.error("config.json is wrong")
             sys.exit(1)
