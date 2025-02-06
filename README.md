@@ -147,7 +147,7 @@ services:
       - /run/systemd/system:/run/systemd/system:ro
     environment:
       - DBUS_SYSTEM_BUS_ADDRESS=unix:path=/var/run/dbus/system_bus_socket
-      - TZ=UTC
+      - TZ=Etc/UTC
     restart: always
 ```
 
