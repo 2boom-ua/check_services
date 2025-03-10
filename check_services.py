@@ -7,11 +7,12 @@ import json
 import sys
 import os.path
 import os
+import sys
 import subprocess
 import time
 import requests
-import random
 import logging
+import random
 from schedule import every, repeat, run_pending
 from urllib.parse import urlparse
 
@@ -93,25 +94,25 @@ def SendMessage(message: str):
             return message
 
     """Iterate through multiple platform configurations"""
-    for url, header, pyload, format_message in zip(platform_webhook_url, platform_header, platform_pyload, platform_format_message):
+    for url, header, payload, format_message in zip(platform_webhook_url, platform_header, platform_payload, platform_format_message):
         data, ntfy = None, False
         formated_message = toMarkdownFormat(message, format_message)
         header_json = header if header else None
-        for key in list(pyload.keys()):
+        for key in list(payload.keys()):
             if key == "title":
                 delimiter = "<br>" if format_message == "html" else "\n"
                 header, formated_message = formated_message.split(delimiter, 1)
-                pyload[key] = header.replace("*", "")
+                payload[key] = header.replace("*", "")
             elif key == "extras":
                 formated_message = formated_message.replace("\n", "\n\n")
-                pyload["message"] = formated_message
+                payload["message"] = formated_message
             elif key == "data":
                 ntfy = True
-            pyload[key] = formated_message if key in ["text", "content", "message", "body", "formatted_body", "data"] else pyload[key]
-        pyload_json = None if ntfy else pyload
+            payload[key] = formated_message if key in ["text", "content", "message", "body", "formatted_body", "data"] else payload[key]
+        payload_json = None if ntfy else payload
         data = formated_message.encode("utf-8") if ntfy else None
         """Send the request with the appropriate payload and headers"""
-        SendRequest(url, pyload_json, data, header_json)
+        SendRequest(url, payload_json, data, header_json)
 
 
 if __name__ == "__main__":
@@ -161,7 +162,7 @@ if __name__ == "__main__":
             f"- default dot style: {default_dot_style}.\n"
             f"- polling period: {min_repeat} minute(s)."
         )
-        if all(value in globals() for value in ["platform_webhook_url", "platform_header", "platform_pyload", "platform_format_message"]):
+        if all(value in globals() for value in ["platform_webhook_url", "platform_header", "platform_payload", "platform_format_message"]):
             logger.info(f"Started!")
             if startup_message:
                 SendMessage(f"{header}services monitor:\n{monitoring_message}")
