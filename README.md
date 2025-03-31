@@ -132,7 +132,6 @@ docker run --net host --name check_services --privileged -v ./config.json:/check
 ```
 ### docker-compose
 ```
-version: "3.9"
 services:
   check_services:
     container_name: check_services
