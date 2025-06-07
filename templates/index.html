@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="msapplication-TileImage" content="{{ url_for('static', filename='mstile-144x144.png') }}">
+    <meta http-equiv="Cache-Control" content="no-cache, must-revalidate">
+    <meta http-equiv="X-Content-Type-Options" content="nosniff">
+    <title>Checkservices</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='main.css') }}"/>
+    <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='favicon.svg') }}"/>
+    <link rel="apple-touch-icon" sizes="180x180" href="{{ url_for('static', filename='apple-touch-icon.png') }}">
+</head>
+
+<body>
+    <h1>Service Tracking: {{ hostname }}</h1>
+    {% if services is defined and services %}
+    <table id="servicesTable">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Service</th>
+                <th><div class="white-round"></div></th>
+                <th>Description</th>
+                <th>Active since</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for service in services %}
+            <tr>
+                <td data-label="Count">{{ service[0] }}</td>
+                <td data-label="Service"><span class="nowrap">{{ service[1] }}</span></td>
+                <td data-label="Status">
+                    {% if service[3] == "0" %}
+                        <div class="green-round" title="Active"></div>
+                    {% else %}
+                        <div class="red-round" title="Inactive"></div>
+                    {% endif %}
+                </td>
+                <td data-label="Description"><span class="nowrap">{{ service[2] }}</span></td>
+                <td data-label="Time"><span class="nowrap">{{ service[4] }}</span></td>
+            </tr>
+            {% endfor %}
+            
+            {% if exservices is defined and exservices %}
+            
+            <thead>
+            <tr>
+                <th>#</th>
+                <th>Skipped Service</th>
+                <!--<th>{{ white_emoji }}</th>-->
+                <th><div class="white-round"></div></th>
+                <th>Description</th>
+                <th>Active since</th>
+            </tr>
+            </thead>
+            
+            {% for exservice in exservices %}
+            <tr>
+                <td data-label="Count">{{ exservice[0] }}</td>
+                <td data-label="Service"><span class="nowrap">{{ exservice[1] }}</span></td>
+                <td data-label="Status"><div class="yellow-round" title="Skipped"></div></td>
+                <td data-label="Description"><span class="nowrap">{{ exservice[2] }}</span></td>
+                <td data-label="Time"><span class="nowrap">{{ exservice[3] }}</span></td>
+            </tr>
+            {% endfor %}
+            {% endif %}
+        </tbody>
+    </table>
+  
+    {% else %}
+    <p>No services available to display. Check server logs for details.</p>
+    {% endif %}
+    <div class="copyright">
+        <span>Wanted services of multi-user.target</span>
+        <span>Checkservices, © 2boom, 2024-25</span>
+    </div>
+</body>
+<script>
+    setInterval(function () {
+        const loadingElement = document.getElementById('loading');
+        if (loadingElement) {
+            loadingElement.style.display = 'block';
+        }
+
+        fetch('/')
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.text();
+            })
+            .then(html => {
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+                const newTable = doc.querySelector('#servicesTable');
+                const currentTable = document.querySelector('#servicesTable');
+
+                if (newTable && currentTable) {
+                    currentTable.replaceWith(newTable);  // more modern and robust
+                }
+
+                if (loadingElement) {
+                    loadingElement.style.display = 'none';
+                }
+            })
+            .catch(error => {
+                console.error('Error refreshing page:', error);
+                if (loadingElement) {
+                    loadingElement.style.display = 'none';
+                    loadingElement.textContent = 'Error refreshing data';
+                }
+            });
+    }, 30000);
+</script>
+
+</html>
