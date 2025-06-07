@@ -144,6 +144,8 @@ services:
       - /etc/systemd/system/multi-user.target.wants:/etc/systemd/system/multi-user.target.wants:ro
       - /var/run/dbus:/var/run/dbus:ro
       - /run/systemd/system:/run/systemd/system:ro
+      - /etc/systemd/system:/etc/systemd/system:ro
+      - /run/systemd/system:/run/systemd/system:ro
     environment:
       - DBUS_SYSTEM_BUS_ADDRESS=unix:path=/var/run/dbus/system_bus_socket
       - TZ=Etc/UTC
@@ -184,6 +186,10 @@ systemctl enable check_services.service
 ```
 systemctl start check_services.service
 ```
+
+### View
+https://your_domain_name or http://server_ip:5152
+
 ### License
 
 This project is licensed under the MIT License - see the [MIT License](https://opensource.org/licenses/MIT) for details.
