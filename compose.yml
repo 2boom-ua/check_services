@@ -10,6 +10,8 @@ services:
       - /etc/systemd/system/multi-user.target.wants:/etc/systemd/system/multi-user.target.wants:ro
       - /var/run/dbus:/var/run/dbus:ro
       - /run/systemd/system:/run/systemd/system:ro
+      - /etc/systemd/system:/etc/systemd/system:ro
+      - /run/systemd/system:/run/systemd/system:ro
     environment:
       - DBUS_SYSTEM_BUS_ADDRESS=unix:path=/var/run/dbus/system_bus_socket
       - TZ=Etc/UTC
