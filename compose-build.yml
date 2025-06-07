@@ -12,6 +12,8 @@ services:
       - ./exlude_service.json:/check_services/exlude_service.json
       - /etc/systemd/system/multi-user.target.wants:/etc/systemd/system/multi-user.target.wants:ro
       - /run/systemd/system:/run/systemd/system:ro
+      - /etc/systemd/system:/etc/systemd/system:ro
+      - /run/systemd/system:/run/systemd/system:ro
       - /var/run/dbus:/var/run/dbus:ro
     environment:
       - DBUS_SYSTEM_BUS_ADDRESS=unix:path=/var/run/dbus/system_bus_socket
