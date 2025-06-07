@@ -136,6 +136,8 @@ services:
   check_services:
     container_name: check_services
     image: ghcr.io/2boom-ua/check_services:latest
+    ports:
+      - 5152:5152
     privileged: true
     network_mode: host
     volumes:
