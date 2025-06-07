@@ -185,6 +185,9 @@ systemctl enable check_services.service
 systemctl start check_services.service
 ```
 
+### View
+https://your_domain_name or http://server_ip:5151
+
 ### License
 
 This project is licensed under the MIT License - see the [MIT License](https://opensource.org/licenses/MIT) for details.
