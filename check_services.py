@@ -136,6 +136,8 @@ def non_monitoring_services(dir_path, exclude_services=[]) -> list:
         except Exception as e:
             description = f"Error reading description: {e}"
 
+        since_time = "Unmonitored"
+
         services_list.append((service, description, since_time))
 
     list_non_monitoring = services_list
