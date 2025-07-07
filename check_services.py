@@ -136,22 +136,6 @@ def non_monitoring_services(dir_path, exclude_services=[]) -> list:
         except Exception as e:
             description = f"Error reading description: {e}"
 
-        since_time = "N/A"
-        try:
-            result = subprocess.run(
-                ["systemctl", "show", service, "--property=ActiveEnterTimestamp"],
-                capture_output=True, text=True
-            )
-            if result.returncode == 0:
-                line = result.stdout.strip()
-                if "=" in line:
-                    raw_time = line.split("=", 1)[1].strip()
-                    if raw_time and raw_time.lower() != "n/a":
-                        dt = datetime.strptime(raw_time, "%a %Y-%m-%d %H:%M:%S %Z")
-                        since_time = dt.strftime("%Y-%m-%d %H:%M:%S")
-        except Exception as e:
-            since_time = f"Error: {e}"
-
         services_list.append((service, description, since_time))
 
     list_non_monitoring = services_list
