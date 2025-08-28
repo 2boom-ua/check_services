@@ -30,6 +30,8 @@ This Python script monitors the status of system services on a Linux machine. It
 - **Configuration:** Easily configurable through JSON files for notification settings and excluded services.
 - **Polling Period:** Adjustable polling interval to check service status.
 
+### View
+https://your_domain_name or http://server_ip:5152
 
 ### Requirements
 - Python 3.x
@@ -186,10 +188,6 @@ systemctl enable check_services.service
 ```
 systemctl start check_services.service
 ```
-
-### View
-https://your_domain_name or http://server_ip:5152
-
 ### License
 
 This project is licensed under the MIT License - see the [MIT License](https://opensource.org/licenses/MIT) for details.
