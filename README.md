@@ -1,6 +1,6 @@
 ## Service Monitoring Script
 <div align="center">  
-    <img src="https://github.com/2boom-ua/check_services/blob/main/check_services.jpg?raw=true" alt="" width="943" height="991">
+    <img src="https://github.com/2boom-ua/check_services/blob/main/check_services.jpg?raw=true" alt="" width="629" height="661">
 </div>
 
 ### Overview
