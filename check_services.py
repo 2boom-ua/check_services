@@ -17,18 +17,11 @@ from urllib.parse import urlparse
 from flask import Flask, render_template, url_for, jsonify
 from threading import Thread
 
-platform_webhook_url = []
-platform_header = []
-platform_payload = []
-platform_format_message = []
-services_data = []
-exclude_services = []
-list_non_monitoring = []
-old_status = []
-green_dot = ""
-red_dot = ""
-white_dot = ""
-yellow_dot = ""
+platform_webhook_url = platform_header = platform_payload = platform_format_message = \
+services_data = exclude_services = list_non_monitoring = old_status = []
+
+green_dot = red_dot = white_dot = yellow_dot = ""
+
 square_dots = {"green": "\U0001F7E9", "red": "\U0001F7E5", "white": "\U00002B1C", "yellow": "\U0001F7E8"}
 round_dots = {"green": "\U0001F7E2", "red": "\U0001F534", "white": "\U000026AA", "yellow": "\U0001F7E1"}
 
