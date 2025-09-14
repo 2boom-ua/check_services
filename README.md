@@ -99,14 +99,6 @@ cd check_services
 ```
 pip install -r requirements.txt
 ```
-## Docker
-```bash
-  docker build -t check_services .
-```
-or
-```bash
-  docker pull ghcr.io/2boom-ua/check_services:latest
-```
 ### Dowload and edit config.json and exlude_service.json
 ```bash
 curl -L -o ./config.json  https://raw.githubusercontent.com/2boom-ua/check_services/main/config.json
@@ -114,36 +106,6 @@ curl -L -o ./config.json  https://raw.githubusercontent.com/2boom-ua/check_servi
 ```bash
 curl -L -o ./exlude_service.json  https://raw.githubusercontent.com/2boom-ua/check_services/main/exlude_service.json
 ```
-### docker-cli
-```bash
-docker run --net host --name check_services --privileged -v ./config.json:/check_services/config.json -v ./exlude_service.json:/check_services/exlude_service.json -v /etc/systemd/system/multi-user.target.wants:/etc/systemd/system/multi-user.target.wants:ro -v /var/run/dbus:/var/run/dbus:ro -v /run/systemd/system:/run/systemd/system:ro -e DBUS_SYSTEM_BUS_ADDRESS=unix:path=/var/run/dbus/system_bus_socket -e TZ=UTC --restart always ghcr.io/2boom-ua/check_services:latest
-```
-### docker-compose
-```
-services:
-  check_services:
-    container_name: check_services
-    image: ghcr.io/2boom-ua/check_services:latest
-    privileged: true
-    network_mode: host
-    volumes:
-      - ./config.json:/check_services/config.json
-      - ./exlude_service.json:/check_services/exlude_service.json
-      - /etc/systemd/system/multi-user.target.wants:/etc/systemd/system/multi-user.target.wants:ro
-      - /var/run/dbus:/var/run/dbus:ro
-      - /run/systemd/system:/run/systemd/system:ro
-      - /etc/systemd/system:/etc/systemd/system:ro
-      - /run/systemd/system:/run/systemd/system:ro
-    environment:
-      - DBUS_SYSTEM_BUS_ADDRESS=unix:path=/var/run/dbus/system_bus_socket
-      - TZ=Etc/UTC
-    restart: always
-```
-
-```bash
-docker-compose up -d
-```
----
 ### Running as a Linux Service
 You can set this script to run as a Linux service for continuous monitoring.
 
