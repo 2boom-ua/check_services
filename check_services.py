@@ -53,34 +53,43 @@ def get_host_name() -> str:
             hostname = file.read().strip()
     return hostname
 
-
-def fetch_service_status(dir_path) -> list:
+def fetch_service_status(dir_path=None) -> list:
     """Collects status, descriptions, and active since time of services"""
     global services_data
 
     services_list = []
 
-    services = [
-        file for file in os.listdir(dir_path)
-        if file.endswith(".service") and os.path.islink(os.path.join(dir_path, file))
-    ]
+    try:
+        # Debian 12/13 compatible way: use systemctl instead of dir scan
+        result = subprocess.run(
+            ["systemctl", "list-unit-files", "--type=service", "--state=enabled", "--no-pager", "--no-legend"],
+            capture_output=True, text=True, check=True
+        )
+        services = [line.split()[0] for line in result.stdout.splitlines() if line.strip()]
+    except Exception as e:
+        services_data = []
+        return [(f"Error: {e}", "1")]
+
+    # exclude unwanted services
     services = [service for service in services if service not in exclude_services]
 
     for service in services:
-        service_path = os.path.join(dir_path, service)
         description = "No description found"
         try:
-            with open(service_path, "r", encoding="utf-8", errors="ignore") as f:
-                for line in f:
-                    if line.strip().startswith("Description="):
-                        description = line.strip().split("=", 1)[1]
-                        break
+            desc = subprocess.run(
+                ["systemctl", "show", service, "--property=Description"],
+                capture_output=True, text=True
+            )
+            if desc.returncode == 0 and "=" in desc.stdout:
+                description = desc.stdout.strip().split("=", 1)[1]
         except Exception as e:
             description = f"Error reading description: {e}"
 
+        # status check
         check = subprocess.run(["systemctl", "is-active", service], capture_output=True, text=True)
         status = "0" if check.returncode == 0 and check.stdout.strip() == "active" else "1"
 
+        # active since
         since_time = "N/A"
         try:
             result = subprocess.run(
@@ -92,16 +101,19 @@ def fetch_service_status(dir_path) -> list:
                 if "=" in line:
                     raw_time = line.split("=", 1)[1].strip()
                     if raw_time and raw_time.lower() != "n/a":
-                        dt = datetime.strptime(raw_time, "%a %Y-%m-%d %H:%M:%S %Z")
-                        since_time = dt.strftime("%Y-%m-%d %H:%M:%S")
+                        try:
+                            dt = datetime.strptime(raw_time, "%a %Y-%m-%d %H:%M:%S %Z")
+                            since_time = dt.strftime("%Y-%m-%d %H:%M:%S")
+                        except Exception:
+                            since_time = raw_time  # keep raw if parse fails
         except Exception as e:
             since_time = f"Error: {e}"
 
         services_list.append((service, description, status, since_time))
 
     services_data = services_list
-
     return [(service, status) for service, _, status, _ in services_list]
+
 
 
 def non_monitoring_services(dir_path, exclude_services=[]) -> list:
