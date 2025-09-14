@@ -1,4 +1,4 @@
-## Service Monitoring Script
+## Service Monitoring
 <div align="center">  
     <img src="https://github.com/2boom-ua/check_services/blob/main/check_services.jpg?raw=true" alt="" width="939" height="494">
 </div>
