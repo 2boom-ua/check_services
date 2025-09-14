@@ -60,7 +60,6 @@ def fetch_service_status(dir_path=None) -> list:
     services_list = []
 
     try:
-        # Debian 12/13 compatible way: use systemctl instead of dir scan
         result = subprocess.run(
             ["systemctl", "list-unit-files", "--type=service", "--state=enabled", "--no-pager", "--no-legend"],
             capture_output=True, text=True, check=True
@@ -70,7 +69,6 @@ def fetch_service_status(dir_path=None) -> list:
         services_data = []
         return [(f"Error: {e}", "1")]
 
-    # exclude unwanted services
     services = [service for service in services if service not in exclude_services]
 
     for service in services:
@@ -85,11 +83,9 @@ def fetch_service_status(dir_path=None) -> list:
         except Exception as e:
             description = f"Error reading description: {e}"
 
-        # status check
         check = subprocess.run(["systemctl", "is-active", service], capture_output=True, text=True)
         status = "0" if check.returncode == 0 and check.stdout.strip() == "active" else "1"
 
-        # active since
         since_time = "N/A"
         try:
             result = subprocess.run(
