@@ -17,8 +17,14 @@ from urllib.parse import urlparse
 from flask import Flask, render_template, url_for, jsonify
 from threading import Thread
 
-platform_webhook_url = platform_header = platform_payload = platform_format_message = \
-services_data = exclude_services = list_non_monitoring = old_status = []
+platform_webhook_url = []
+platform_header = []
+platform_payload = []
+platform_format_message = []
+services_data = []
+exclude_services = []
+list_non_monitoring = []
+old_status = []
 
 green_dot = red_dot = white_dot = yellow_dot = ""
 
@@ -39,7 +45,7 @@ app.logger.disabled = True
 
 
 def get_base_url(url):
-    """Get base URL without path or query."""
+    """Get base url"""
     parsed_url = urlparse(url)
     return f"{parsed_url.scheme}://{parsed_url.netloc}...."
 
@@ -53,10 +59,41 @@ def get_host_name() -> str:
             hostname = file.read().strip()
     return hostname
 
-def fetch_service_status(dir_path=None) -> list:
-    """Collects status, descriptions, and active since time of services"""
-    global services_data
 
+def get_enabled_not_running_services():
+    """Returns a list of systemd services that are enabled but not running."""
+    try:
+        enabled_cmd = ["systemctl", "list-unit-files", "--type=service", "--state=enabled"]
+        enabled_output = subprocess.check_output(enabled_cmd, text=True)
+
+        enabled_services = [
+            line.split()[0] for line in enabled_output.splitlines()
+            if line and "enabled" in line and ".service" in line
+        ]
+
+        not_running_services = []
+        for service in enabled_services:
+            active_cmd = ["systemctl", "is-active", service]
+            try:
+                active_output = subprocess.check_output(active_cmd, text=True).strip()
+                if active_output != "active":
+                    not_running_services.append(service)
+            except subprocess.CalledProcessError:
+                not_running_services.append(service)
+        
+        return not_running_services
+    
+    except subprocess.CalledProcessError as e:
+        print(f"Error executing systemctl: {e}")
+        return []
+    except Exception as e:
+        print(f"Unexpected error: {e}")
+        return []
+
+
+def fetch_service_status() -> list:
+    """Fetches the status of all enabled services excluding specified services."""
+    global services_data
     services_list = []
 
     try:
@@ -98,10 +135,13 @@ def fetch_service_status(dir_path=None) -> list:
                     raw_time = line.split("=", 1)[1].strip()
                     if raw_time and raw_time.lower() != "n/a":
                         try:
-                            dt = datetime.strptime(raw_time, "%a %Y-%m-%d %H:%M:%S %Z")
+                            if raw_time.count(" ") >= 3:
+                                dt = datetime.strptime(raw_time, "%a %Y-%m-%d %H:%M:%S %Z")
+                            else:
+                                dt = datetime.strptime(raw_time, "%Y-%m-%d %H:%M:%S")
                             since_time = dt.strftime("%Y-%m-%d %H:%M:%S")
                         except Exception:
-                            since_time = raw_time  # keep raw if parse fails
+                            since_time = raw_time
         except Exception as e:
             since_time = f"Error: {e}"
 
@@ -111,98 +151,92 @@ def fetch_service_status(dir_path=None) -> list:
     return [(service, status) for service, _, status, _ in services_list]
 
 
-
-def non_monitoring_services(dir_path, exclude_services=[]) -> list:
-    """Collects service name, description, and active since time (without status check)."""
+def non_monitoring_services(exclude_services=[]) -> list:
+    """Returns information about services that are excluded from monitoring."""
     global list_non_monitoring
-
     services_list = []
 
-    services = exclude_services
-    
-    for service in services:
-        service_path = os.path.join(dir_path, service)
+    if not exclude_services:
+        list_non_monitoring = []
+        return []
 
-        if not os.path.exists(service_path):
-            services_list.append((service, "Service file not found", "N/A"))
-            continue
+    for service in exclude_services:
+        if not service.endswith(".service"):
+            service += ".service"
 
         description = "No description found"
         try:
-            with open(service_path, "r", encoding="utf-8", errors="ignore") as f:
-                for line in f:
-                    if line.strip().startswith("Description="):
-                        description = line.strip().split("=", 1)[1]
-                        break
+            desc = subprocess.run(
+                ["systemctl", "show", service, "--property=Description"],
+                capture_output=True, text=True
+            )
+            if desc.returncode == 0 and "=" in desc.stdout:
+                description = desc.stdout.strip().split("=", 1)[1]
         except Exception as e:
             description = f"Error reading description: {e}"
 
-        since_time = "Unmonitored"
-
+        since_time = "Skipped service"
         services_list.append((service, description, since_time))
 
     list_non_monitoring = services_list
-
     return services_list
 
 
 def send_message(message: str):
-    """Internal function to send HTTP POST requests with error handling"""
+    """Send HTTP POST requests with retry logic."""
     def send_request(url, json_data=None, data=None, headers=None):
         max_attempts = 5
         for attempt in range(max_attempts):
             try:
                 response = requests.post(url, json=json_data, data=data, headers=headers, timeout=(5, 20))
                 response.raise_for_status()
-                logger.info(f"Message successfully sent to {get_base_url(url)}. Status code: {response.status_code}")
                 return
             except requests.exceptions.RequestException as e:
-                logger.error(f"Attempt {attempt + 1}/{max_attempts} - Error sending message to {get_base_url(url)}: {e}")
+                logger.error("error_send_request_failed" + f" {attempt + 1}/{max_attempts} - {url}: {e}")
                 if attempt == max_attempts - 1:
-                    logger.error(f"Failed to send message to {get_base_url(url)} after {max_attempts} attempts")
+                    logger.error("error_send_request_max_attempts" + f" {url}")
                 else:
                     backoff_time = (2 ** attempt) + random.uniform(0, 1)
-                    logger.warning(f"Retrying in {backoff_time:.2f} seconds...")
+                    logger.warning("log_retrying" + f" {backoff_time:.2f} seconds...")
                     time.sleep(backoff_time)
 
     def to_html_format(message: str) -> str:
-        """Convert Markdown-like syntax to HTML format."""
         message = ''.join(f"<b>{part}</b>" if i % 2 else part for i, part in enumerate(message.split('*')))
         return message.replace("\n", "<br>")
 
-    def to_markdown_format(message: str, m_format: str) -> str:
-        """Convert the message to the specified format"""
-        if m_format == "html":
-            return to_html_format(message)
-        elif m_format == "markdown":
-            return message.replace("*", "**")
-        elif m_format == "text":
-            return message.replace("*", "")
-        elif m_format == "simplified":
-            return message
-        else:
-            logger.error(f"Unknown format '{m_format}' provided. Returning original message.")
-            return message
+    def to_markdown_format(message: str, markdown_type: str) -> str:
+        formatters = {
+            "html": lambda msg: to_html_format(msg),
+            "markdown": lambda msg: msg.replace("*", "**"),
+            "text": lambda msg: msg.replace("*", ""),
+            "simplified": lambda msg: msg,
+        }
+        formatter = formatters.get(markdown_type)
+        if formatter:
+            return formatter(message)
+        logger.error("error_unknown_format" + f" '{markdown_type}'")
+        return message
 
     for url, header, payload, format_message in zip(platform_webhook_url, platform_header, platform_payload, platform_format_message):
         data, ntfy = None, False
-        formated_message = to_markdown_format(message, format_message)
+        formatted_message = to_markdown_format(message, format_message)
         header_json = header if header else None
 
-        for key in list(payload.keys()):
-            if key == "title":
-                delimiter = "<br>" if format_message == "html" else "\n"
-                header, formated_message = formated_message.split(delimiter, 1)
-                payload[key] = header.replace("*", "")
-            elif key == "extras":
-                formated_message = formated_message.replace("\n", "\n\n")
-                payload["message"] = formated_message
-            elif key == "data":
-                ntfy = True
-            payload[key] = formated_message if key in ["text", "content", "message", "body", "formatted_body", "data"] else payload[key]
+        if isinstance(payload, dict):
+            for key in list(payload.keys()):
+                if key == "title":
+                    delimiter = "<br>" if format_message == "html" else "\n"
+                    header, formatted_message = formatted_message.split(delimiter, 1)
+                    payload[key] = header.replace("*", "")
+                elif key == "extras":
+                    formatted_message = formatted_message.replace("\n", "\n\n")
+                    payload["message"] = formatted_message
+                elif key == "data":
+                    ntfy = True
+                payload[key] = formatted_message if key in ["text", "content", "message", "body", "formatted_body", "data"] else payload[key]
 
         payload_json = None if ntfy else payload
-        data = formated_message.encode("utf-8") if ntfy else None
+        data = formatted_message.encode("utf-8") if ntfy else None
         send_request(url, payload_json, data, header_json)
 
 
@@ -213,49 +247,27 @@ def index():
         exservices = sorted(list_non_monitoring)
         services_with_index = [(i+1, service[0], service[1], service[2], service[3]) for i, service in enumerate(services)]
         exservices_with_index = [(i+1, exservice[0], exservice[1], exservice[2]) for i, exservice in enumerate(exservices)]
-        return render_template("index.html", 
-                            hostname=hostname,
-                            services=services_with_index,
-                            exservices=exservices_with_index)
+        return render_template("index.html", hostname=hostname, services=services_with_index, exservices=exservices_with_index)
     except Exception as e:
         logger.error(f"Error in index route: {e}")
         return render_template("error.html", error=str(e)), 500
 
 
-@app.route('/health', methods=['GET'])
-def health_check():
-    """Health check endpoint."""
-    try:
-        return jsonify({"status": "healthy"}), 200
-    except Exception as e:
-        logger.error(f"Health check failed: {e}.")
-        return jsonify({"status": "error", "message": str(e)}), 500
-
-
 def run_flask():
-    """Run Flask app in a separate thread."""
     app.run(host='0.0.0.0', port=5152, debug=False, use_reloader=False)
 
 
 if __name__ == "__main__":
     base_dir = os.path.dirname(os.path.realpath(__file__))
     config_file = os.path.join(base_dir, "config.json")
-    exclude_file = os.path.join(base_dir, "exlude_service.json")
-    dir_path = "/etc/systemd/system/multi-user.target.wants"
-
+    monitoring_message = ""
     config_json = {}
     startup_message = True
     default_dot_style = True
     min_repeat = 1
-
-    if os.path.exists(exclude_file):
-        try:
-            with open(exclude_file, "r") as file:
-                excluded_json = json.load(file)
-                exclude_services = excluded_json.get("LIST", [])
-        except (json.JSONDecodeError, OSError) as e:
-            logger.error(f"Error reading exclude file: {e}")
-
+    
+    exclude_services = get_enabled_not_running_services()
+    
     if os.path.exists(config_file):
         try:
             with open(config_file, "r") as file:
@@ -270,45 +282,66 @@ if __name__ == "__main__":
     except (TypeError, ValueError):
         min_repeat = 1
 
-    hostname = get_host_name()
-    header = f"*{hostname}* (systemd)\n"
-
     dots = square_dots if not default_dot_style else round_dots
     green_dot, red_dot, white_dot, yellow_dot = dots["green"], dots["red"], dots["white"], dots["yellow"]
 
     no_messaging_keys = ["STARTUP_MESSAGE", "DEFAULT_DOT_STYLE", "MIN_REPEAT"]
     messaging_platforms = list(set(config_json.keys()) - set(no_messaging_keys))
 
-    try:
+    if os.path.exists(config_file):
+        with open(config_file, "r") as file:
+            config_json = json.loads(file.read())
+        try:
+            startup_message = config_json.get("STARTUP_MESSAGE", True)
+            default_dot_style = config_json.get("DEFAULT_DOT_STYLE", True)
+            min_repeat = max(int(config_json.get("MIN_REPEAT", 1)), 1)
+        except (json.JSONDecodeError, ValueError, TypeError, KeyError):
+            default_dot_style = startup_message = True
+            min_repeat = 1
+            logger.error("Error or incorrect settings in config.json. Default settings will be used.")
+        hostname = get_host_name()
+        header = f"*{hostname}* (systemd)\n"
+
+        no_messaging_keys = ["STARTUP_MESSAGE", "DEFAULT_DOT_STYLE", "MIN_REPEAT"]
+        messaging_platforms = list(set(config_json) - set(no_messaging_keys))
         for platform in messaging_platforms:
-            platform_conf = config_json.get(platform, {})
-            if platform_conf.get("ENABLED", False):
-                for key, value in platform_conf.items():
+            if config_json[platform].get("ENABLED", False):
+                for key, value in config_json[platform].items():
                     platform_key = f"platform_{key.lower()}"
-                    current_value = globals().get(platform_key, [])
-                    if not isinstance(current_value, list):
-                        current_value = [current_value]
-                    current_value.extend(value if isinstance(value, list) else [value])
-                    globals()[platform_key] = current_value
-
-        old_status = fetch_service_status(dir_path)
-        non_monitoring_services(dir_path, exclude_services)
-
+                    if platform_key in globals():
+                        globals()[platform_key] = (globals()[platform_key] if isinstance(globals()[platform_key], list) else [globals()[platform_key]])
+                        globals()[platform_key].extend(value if isinstance(value, list) else [value])
+                    else:
+                        globals()[platform_key] = value if isinstance(value, list) else [value]
+                monitoring_message += f"- messaging: {platform.lower().capitalize()},\n"
+        monitoring_message += (
+            f"- default dot style: {default_dot_style}.\n"
+            f"- polling period: {min_repeat} minute(s)."
+        )
+        
+        old_status = fetch_service_status()
+        non_monitoring_services(exclude_services)
+        
         flask_thread = threading.Thread(target=run_flask, daemon=True)
         flask_thread.start()
-
-        logger.info("Service monitor started successfully")
-
-    except Exception as e:
-        logger.error(f"Failed to initialize: {str(e)}")
+        
+        if all(value in globals() for value in ["platform_webhook_url", "platform_header", "platform_payload", "platform_format_message"]):
+            logger.info(f"Started!")
+            if startup_message:
+                send_message(f"{header}systemd monitor:\n{monitoring_message}")
+        else:
+            logger.error("config.json is wrong")
+            sys.exit(1)
+            
+    else:
+        logger.error("config.json not found")
         sys.exit(1)
 
 
 @repeat(every(min_repeat).minutes)
-def CheckServices():
-    """Periodically checks the status of services and sends a status update if there are changes."""
+def check_services():
     global old_status
-    new_status = fetch_service_status(dir_path)
+    new_status = fetch_service_status()
     total_services = len(new_status)
     bad_services = 0
     message = ""
