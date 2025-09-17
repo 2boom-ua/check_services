@@ -13,7 +13,7 @@ This Python script monitors the status of system services on a Linux machine. It
 - **Real-time notifications with support for multiple accounts** via:
   - Telegram, Discord, Slack, Gotify, Ntfy, Pushbullet, Pushover, Rocket.chat
   - Matrix, Mattermost, Floc, Pumble, Zulip, Apprise, Webntfy, Custom webhook
-- **Configuration:** Easily configurable through JSON files for notification settings and excluded services.
+- **Configuration:** Easily configurable through JSON files for notification settings.
 - **Polling Period:** Adjustable polling interval to check service status.
 
 ### View
@@ -77,19 +77,6 @@ You can use any name and any number of records for each messaging platform confi
 | DEFAULT_DOT_STYLE | true/false | Round/Square dots. |
 | MIN_REPEAT | 1 | Set the poll period in minutes. Minimum is 1 minute. | 
 
-
-### Edit exlude_service.json:
-A **exlude_service.json** file in the same directory as the script, include the name of the services that aren't monitored. ***the presence of the file is not necessary***
-```
-{
-   "LIST": [
-      "fisrtservicename.service",
-      "secondservicename.service",
-      "..."
-   ]
-}
-```
-
 ### Clone the repository:
 ```
 git clone https://github.com/2boom-ua/check_services.git
@@ -99,13 +86,11 @@ cd check_services
 ```
 pip install -r requirements.txt
 ```
-### Dowload and edit config.json and exlude_service.json
+### Dowload and edit config.json
 ```bash
 curl -L -o ./config.json  https://raw.githubusercontent.com/2boom-ua/check_services/main/config.json
 ```
-```bash
-curl -L -o ./exlude_service.json  https://raw.githubusercontent.com/2boom-ua/check_services/main/exlude_service.json
-```
+
 ### Running as a Linux Service
 You can set this script to run as a Linux service for continuous monitoring.
 
@@ -116,7 +101,7 @@ nano /etc/systemd/system/check_services.service
 Add the following content:
 ```
 [Unit]
-Description=services state change monitor
+Description=Systemd State Сhange Monitor
 After=multi-user.target
 
 [Service]
