@@ -22,5 +22,6 @@
     },
     "STARTUP_MESSAGE": false,
     "DEFAULT_DOT_STYLE": true,
-    "MIN_REPEAT": 1
+    "MESSENGER_NOFICATION": true
 }
+
