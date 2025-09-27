@@ -68,14 +68,14 @@ You can use any name and any number of records for each messaging platform confi
 ```
 "STARTUP_MESSAGE": true,
 "DEFAULT_DOT_STYLE": true,
-"MIN_REPEAT": 1
+"MESSENGER_NOFICATION": true
 ```
 
 | Item   | Required   | Description   |
 |------------|------------|------------|
 | STARTUP_MESSAGE | true/false | On/Off startup message. |
 | DEFAULT_DOT_STYLE | true/false | Round/Square dots. |
-| MIN_REPEAT | 1 | Set the poll period in minutes. Minimum is 1 minute. | 
+| NOTIFY_ENABLED | true/false | On/Off notification via messaging platforms. | 
 
 ### Clone the repository:
 ```
@@ -101,12 +101,13 @@ nano /etc/systemd/system/check_services.service
 Add the following content:
 ```
 [Unit]
-Description=Systemd State Сhange Monitor
+Description=Services State Change Monitor
 After=multi-user.target
 
 [Service]
 Type=simple
 Restart=always
+ExecStartPre=/bin/sleep 30
 ExecStart=/usr/bin/python3 /opt/check_services/check_services.py
 
 [Install]
