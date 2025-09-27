@@ -60,6 +60,64 @@ def get_host_name() -> str:
     return hostname
 
 
+def send_message(message: str):
+    """Send HTTP POST requests with retry logic."""
+    def send_request(url, json_data=None, data=None, headers=None):
+        max_attempts = 5
+        for attempt in range(max_attempts):
+            try:
+                response = requests.post(url, json=json_data, data=data, headers=headers, timeout=(5, 20))
+                response.raise_for_status()
+                return
+            except requests.exceptions.RequestException as e:
+                logger.error("error_send_request_failed" + f" {attempt + 1}/{max_attempts} - {url}: {e}")
+                if attempt == max_attempts - 1:
+                    logger.error("error_send_request_max_attempts" + f" {url}")
+                else:
+                    backoff_time = (2 ** attempt) + random.uniform(0, 1)
+                    logger.warning("log_retrying" + f" {backoff_time:.2f} seconds...")
+                    time.sleep(backoff_time)
+
+    def to_html_format(message: str) -> str:
+        message = ''.join(f"<b>{part}</b>" if i % 2 else part for i, part in enumerate(message.split('*')))
+        return message.replace("\n", "<br>")
+
+    def to_markdown_format(message: str, markdown_type: str) -> str:
+        formatters = {
+            "html": lambda msg: to_html_format(msg),
+            "markdown": lambda msg: msg.replace("*", "**"),
+            "text": lambda msg: msg.replace("*", ""),
+            "simplified": lambda msg: msg,
+        }
+        formatter = formatters.get(markdown_type)
+        if formatter:
+            return formatter(message)
+        logger.error("error_unknown_format" + f" '{markdown_type}'")
+        return message
+
+    for url, header, payload, format_message in zip(platform_webhook_url, platform_header, platform_payload, platform_format_message):
+        data, ntfy = None, False
+        formatted_message = to_markdown_format(message, format_message)
+        header_json = header if header else None
+
+        if isinstance(payload, dict):
+            for key in list(payload.keys()):
+                if key == "title":
+                    delimiter = "<br>" if format_message == "html" else "\n"
+                    header, formatted_message = formatted_message.split(delimiter, 1)
+                    payload[key] = header.replace("*", "")
+                elif key == "extras":
+                    formatted_message = formatted_message.replace("\n", "\n\n")
+                    payload["message"] = formatted_message
+                elif key == "data":
+                    ntfy = True
+                payload[key] = formatted_message if key in ["text", "content", "message", "body", "formatted_body", "data"] else payload[key]
+
+        payload_json = None if ntfy else payload
+        data = formatted_message.encode("utf-8") if ntfy else None
+        send_request(url, payload_json, data, header_json)
+
+
 def get_enabled_not_running_services():
     """Returns a list of systemd services that are enabled but not running."""
     try:
@@ -182,64 +240,6 @@ def non_monitoring_services(exclude_services=[]) -> list:
     return services_list
 
 
-def send_message(message: str):
-    """Send HTTP POST requests with retry logic."""
-    def send_request(url, json_data=None, data=None, headers=None):
-        max_attempts = 5
-        for attempt in range(max_attempts):
-            try:
-                response = requests.post(url, json=json_data, data=data, headers=headers, timeout=(5, 20))
-                response.raise_for_status()
-                return
-            except requests.exceptions.RequestException as e:
-                logger.error("error_send_request_failed" + f" {attempt + 1}/{max_attempts} - {url}: {e}")
-                if attempt == max_attempts - 1:
-                    logger.error("error_send_request_max_attempts" + f" {url}")
-                else:
-                    backoff_time = (2 ** attempt) + random.uniform(0, 1)
-                    logger.warning("log_retrying" + f" {backoff_time:.2f} seconds...")
-                    time.sleep(backoff_time)
-
-    def to_html_format(message: str) -> str:
-        message = ''.join(f"<b>{part}</b>" if i % 2 else part for i, part in enumerate(message.split('*')))
-        return message.replace("\n", "<br>")
-
-    def to_markdown_format(message: str, markdown_type: str) -> str:
-        formatters = {
-            "html": lambda msg: to_html_format(msg),
-            "markdown": lambda msg: msg.replace("*", "**"),
-            "text": lambda msg: msg.replace("*", ""),
-            "simplified": lambda msg: msg,
-        }
-        formatter = formatters.get(markdown_type)
-        if formatter:
-            return formatter(message)
-        logger.error("error_unknown_format" + f" '{markdown_type}'")
-        return message
-
-    for url, header, payload, format_message in zip(platform_webhook_url, platform_header, platform_payload, platform_format_message):
-        data, ntfy = None, False
-        formatted_message = to_markdown_format(message, format_message)
-        header_json = header if header else None
-
-        if isinstance(payload, dict):
-            for key in list(payload.keys()):
-                if key == "title":
-                    delimiter = "<br>" if format_message == "html" else "\n"
-                    header, formatted_message = formatted_message.split(delimiter, 1)
-                    payload[key] = header.replace("*", "")
-                elif key == "extras":
-                    formatted_message = formatted_message.replace("\n", "\n\n")
-                    payload["message"] = formatted_message
-                elif key == "data":
-                    ntfy = True
-                payload[key] = formatted_message if key in ["text", "content", "message", "body", "formatted_body", "data"] else payload[key]
-
-        payload_json = None if ntfy else payload
-        data = formatted_message.encode("utf-8") if ntfy else None
-        send_request(url, payload_json, data, header_json)
-
-
 @app.route("/")
 def index():
     try:
@@ -262,47 +262,29 @@ if __name__ == "__main__":
     config_file = os.path.join(base_dir, "config.json")
     monitoring_message = ""
     config_json = {}
-    startup_message = True
+    startup_message = False
     default_dot_style = True
+    messenger_nofication = False
     min_repeat = 1
-    
-    exclude_services = get_enabled_not_running_services()
-    
-    if os.path.exists(config_file):
-        try:
-            with open(config_file, "r") as file:
-                config_json = json.load(file)
-        except (json.JSONDecodeError, OSError) as e:
-            logger.error(f"Error reading config file: {e}")
-
-    startup_message = config_json.get("STARTUP_MESSAGE", startup_message)
-    default_dot_style = config_json.get("DEFAULT_DOT_STYLE", default_dot_style)
-    try:
-        min_repeat = max(int(config_json.get("MIN_REPEAT", min_repeat)), 1)
-    except (TypeError, ValueError):
-        min_repeat = 1
 
     dots = square_dots if not default_dot_style else round_dots
     green_dot, red_dot, white_dot, yellow_dot = dots["green"], dots["red"], dots["white"], dots["yellow"]
-
-    no_messaging_keys = ["STARTUP_MESSAGE", "DEFAULT_DOT_STYLE", "MIN_REPEAT"]
-    messaging_platforms = list(set(config_json.keys()) - set(no_messaging_keys))
 
     if os.path.exists(config_file):
         with open(config_file, "r") as file:
             config_json = json.loads(file.read())
         try:
-            startup_message = config_json.get("STARTUP_MESSAGE", True)
+            startup_message = config_json.get("STARTUP_MESSAGE", False)
             default_dot_style = config_json.get("DEFAULT_DOT_STYLE", True)
-            min_repeat = max(int(config_json.get("MIN_REPEAT", 1)), 1)
+            messenger_nofication = config_json.get("MESSENGER_NOFICATION", False)
+            if not messenger_nofication:
+                startup_message = False
         except (json.JSONDecodeError, ValueError, TypeError, KeyError):
-            default_dot_style = startup_message = True
-            min_repeat = 1
             logger.error("Error or incorrect settings in config.json. Default settings will be used.")
         hostname = get_host_name()
         header = f"*{hostname}* (systemd)\n"
 
-        no_messaging_keys = ["STARTUP_MESSAGE", "DEFAULT_DOT_STYLE", "MIN_REPEAT"]
+        no_messaging_keys = ["STARTUP_MESSAGE", "DEFAULT_DOT_STYLE", "MESSENGER_NOFICATION"]
         messaging_platforms = list(set(config_json) - set(no_messaging_keys))
         for platform in messaging_platforms:
             if config_json[platform].get("ENABLED", False):
@@ -319,6 +301,7 @@ if __name__ == "__main__":
             f"- polling period: {min_repeat} minute(s)."
         )
         
+        exclude_services = get_enabled_not_running_services()
         old_status = fetch_service_status()
         non_monitoring_services(exclude_services)
         
@@ -341,6 +324,7 @@ if __name__ == "__main__":
 @repeat(every(min_repeat).minutes)
 def check_services():
     global old_status
+
     new_status = fetch_service_status()
     total_services = len(new_status)
     bad_services = 0
@@ -366,7 +350,8 @@ def check_services():
 
         if message:
             message += f"|ALL| - {total_services}, |OK| - {ok_services}, |BAD| - {bad_services}\n"
-            send_message(f"{header}{message}")
+            if messenger_nofication:
+                send_message(f"{header}{message}")
 
 while True:
     run_pending()
