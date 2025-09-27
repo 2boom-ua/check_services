@@ -68,7 +68,7 @@ You can use any name and any number of records for each messaging platform confi
 ```
 "STARTUP_MESSAGE": true,
 "DEFAULT_DOT_STYLE": true,
-"MESSENGER_NOFICATION": true
+"NOTIFY_ENABLED": true
 ```
 
 | Item   | Required   | Description   |
