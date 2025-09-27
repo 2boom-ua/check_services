@@ -264,7 +264,7 @@ if __name__ == "__main__":
     config_json = {}
     startup_message = False
     default_dot_style = True
-    messenger_nofication = False
+    notify_enabled = False
     min_repeat = 1
 
     dots = square_dots if not default_dot_style else round_dots
@@ -276,15 +276,15 @@ if __name__ == "__main__":
         try:
             startup_message = config_json.get("STARTUP_MESSAGE", False)
             default_dot_style = config_json.get("DEFAULT_DOT_STYLE", True)
-            messenger_nofication = config_json.get("MESSENGER_NOFICATION", False)
-            if not messenger_nofication:
+            notify_enabled = config_json.get("NOTIFY_ENABLED", False)
+            if not notify_enabled:
                 startup_message = False
         except (json.JSONDecodeError, ValueError, TypeError, KeyError):
             logger.error("Error or incorrect settings in config.json. Default settings will be used.")
         hostname = get_host_name()
         header = f"*{hostname}* (systemd)\n"
 
-        no_messaging_keys = ["STARTUP_MESSAGE", "DEFAULT_DOT_STYLE", "MESSENGER_NOFICATION"]
+        no_messaging_keys = ["STARTUP_MESSAGE", "DEFAULT_DOT_STYLE", "NOTIFY_ENABLED"]
         messaging_platforms = list(set(config_json) - set(no_messaging_keys))
         for platform in messaging_platforms:
             if config_json[platform].get("ENABLED", False):
@@ -350,7 +350,7 @@ def check_services():
 
         if message:
             message += f"|ALL| - {total_services}, |OK| - {ok_services}, |BAD| - {bad_services}\n"
-            if messenger_nofication:
+            if notify_enabled:
                 send_message(f"{header}{message}")
 
 while True:
