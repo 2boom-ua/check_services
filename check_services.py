@@ -279,46 +279,44 @@ if __name__ == "__main__":
             notify_enabled = config_json.get("NOTIFY_ENABLED", False)
             if not notify_enabled:
                 startup_message = False
+            no_messaging_keys = ["STARTUP_MESSAGE", "DEFAULT_DOT_STYLE", "NOTIFY_ENABLED"]
+            messaging_platforms = list(set(config_json) - set(no_messaging_keys))
+            for platform in messaging_platforms:
+                if config_json[platform].get("ENABLED", False):
+                    for key, value in config_json[platform].items():
+                        platform_key = f"platform_{key.lower()}"
+                        if platform_key in globals():
+                            globals()[platform_key] = (globals()[platform_key] if isinstance(globals()[platform_key], list) else [globals()[platform_key]])
+                            globals()[platform_key].extend(value if isinstance(value, list) else [value])
+                        else:
+                            globals()[platform_key] = value if isinstance(value, list) else [value]
+                    monitoring_message += f"- messaging: {platform.lower().capitalize()},\n"
+            monitoring_message += (
+                f"- default dot style: {default_dot_style}.\n"
+                f"- polling period: {min_repeat} minute(s)."
+            )
+
+            if all(value in globals() for value in ["platform_webhook_url", "platform_header", "platform_payload", "platform_format_message"]):
+                logger.info(f"Started!")
+                if startup_message:
+                    send_message(f"{header}systemd monitor:\n{monitoring_message}")
+            else:
+                logger.error("config.json is wrong")
+
         except (json.JSONDecodeError, ValueError, TypeError, KeyError):
             logger.error("Error or incorrect settings in config.json. Default settings will be used.")
-        hostname = get_host_name()
-        header = f"*{hostname}* (systemd)\n"
-
-        no_messaging_keys = ["STARTUP_MESSAGE", "DEFAULT_DOT_STYLE", "NOTIFY_ENABLED"]
-        messaging_platforms = list(set(config_json) - set(no_messaging_keys))
-        for platform in messaging_platforms:
-            if config_json[platform].get("ENABLED", False):
-                for key, value in config_json[platform].items():
-                    platform_key = f"platform_{key.lower()}"
-                    if platform_key in globals():
-                        globals()[platform_key] = (globals()[platform_key] if isinstance(globals()[platform_key], list) else [globals()[platform_key]])
-                        globals()[platform_key].extend(value if isinstance(value, list) else [value])
-                    else:
-                        globals()[platform_key] = value if isinstance(value, list) else [value]
-                monitoring_message += f"- messaging: {platform.lower().capitalize()},\n"
-        monitoring_message += (
-            f"- default dot style: {default_dot_style}.\n"
-            f"- polling period: {min_repeat} minute(s)."
-        )
-        
-        exclude_services = get_enabled_not_running_services()
-        old_status = fetch_service_status()
-        non_monitoring_services(exclude_services)
-        
-        flask_thread = threading.Thread(target=run_flask, daemon=True)
-        flask_thread.start()
-        
-        if all(value in globals() for value in ["platform_webhook_url", "platform_header", "platform_payload", "platform_format_message"]):
-            logger.info(f"Started!")
-            if startup_message:
-                send_message(f"{header}systemd monitor:\n{monitoring_message}")
-        else:
-            logger.error("config.json is wrong")
-            sys.exit(1)
-            
     else:
         logger.error("config.json not found")
-        sys.exit(1)
+
+    hostname = get_host_name()
+    header = f"*{hostname}* (systemd)\n"
+
+    exclude_services = get_enabled_not_running_services()
+    old_status = fetch_service_status()
+    non_monitoring_services(exclude_services)
+
+    flask_thread = threading.Thread(target=run_flask, daemon=True)
+    flask_thread.start()
 
 
 @repeat(every(min_repeat).minutes)
