@@ -16,13 +16,17 @@
     --mblue: #9FADE3;
     --mviolet: #AE8FC0;
     --mdarkblue: #0881d8;
-    --iyellow: #FFCD66;
-    --iwhite: #FCFCFC;
-    --igreen: #64B461;
-    --ired: #ff2337;
-    --iorange: #FF6433;
-    --iwhite: #F5F5F5;
-    --igrey: #CFCFCF;
+    /*--bgwhite: #FCFCFC;*/
+    --bgyellow: #FFCD66;
+    --bbyellow: #FAB120;
+    --bggreen: #64B461;
+    --bbgreen: #3E943B;
+    --bgred: #ff2337;
+    --bbred: #B81422;
+    --bgorange: #FF6433;
+    --bborange: #F23C0E;
+    --bgwhite: #F5F5F5;
+    --bggrey: #CFCFCF;
 
     /* Theme-Specific Variables */
     --color-scheme-background: #F8F8F8;
@@ -86,35 +90,39 @@ h1 {
 
 /* Table Styles */
 .white-round {
-        width: 13px;
-        height: 13px;
-        background-color: var(--iwhite);
+        width: 14px;
+        height: 14px;
+        background-color: var(--bgwhite);
         border-radius: 50%;
-        border: 1px solid var(--igrey);
+        border: 1px solid var(--bggrey);
     }
 .red-round {
-        width: 14px;
-        height: 14px;
-        background-color:  var(--ired);
+        width: 13px;
+        height: 13px;
+        background-color:  var(--bgred);
         border-radius: 50%;
+        border: 1px solid var(--bbred);
     }
 .green-round {
-        width: 14px;
-        height: 14px;
-        background-color:  var(--igreen);
+        width: 13px;
+        height: 13px;
+        background-color:  var(--bggreen);
         border-radius: 50%;
+        border: 1px solid var(--bbgreen);
     }
 .yellow-round {
-        width: 14px;
-        height: 14px;
-        background-color:  var(--iyellow);
+        width: 13px;
+        height: 13px;
+        background-color:  var(--bgyellow);
         border-radius: 50%;
+        border: 1px solid var(--bbyellow);
     }
 .orange-round {
-        width: 14px;
-        height: 14px;
-        background-color:  var(--iorange);
+        width: 13px;
+        height: 13px;
+        background-color:  var(--bgorange);
         border-radius: 50%;
+        border: 1px solid var(--bborange);
     }
 
 table {
