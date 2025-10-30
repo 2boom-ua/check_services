@@ -14,7 +14,7 @@ import threading
 from datetime import datetime
 from schedule import every, repeat, run_pending
 from urllib.parse import urlparse
-from flask import Flask, render_template, url_for, jsonify
+from flask import Flask, render_template, url_for, jsonify, make_response
 from threading import Thread
 
 platform_webhook_url = []
@@ -240,6 +240,16 @@ def non_monitoring_services(exclude_services=[]) -> list:
     return services_list
 
 
+@app.after_request
+def add_security_headers(response):
+    # Recommended security headers
+    response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0"
+    response.headers["Pragma"] = "no-cache"
+    response.headers["Expires"] = "0"
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    return response
+
+
 @app.route("/")
 def index():
     try:
@@ -269,6 +279,9 @@ if __name__ == "__main__":
 
     dots = square_dots if not default_dot_style else round_dots
     green_dot, red_dot, white_dot, yellow_dot = dots["green"], dots["red"], dots["white"], dots["yellow"]
+    
+    hostname = get_host_name()
+    header = f"*{hostname}* (systemd)\n"
 
     if os.path.exists(config_file):
         with open(config_file, "r") as file:
@@ -307,9 +320,6 @@ if __name__ == "__main__":
             logger.error("Error or incorrect settings in config.json. Default settings will be used.")
     else:
         logger.error("config.json not found")
-
-    hostname = get_host_name()
-    header = f"*{hostname}* (systemd)\n"
 
     exclude_services = get_enabled_not_running_services()
     old_status = fetch_service_status()
