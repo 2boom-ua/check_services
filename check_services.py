@@ -44,12 +44,6 @@ app = Flask(__name__)
 app.logger.disabled = True
 
 
-def get_base_url(url):
-    """Get base url"""
-    parsed_url = urlparse(url)
-    return f"{parsed_url.scheme}://{parsed_url.netloc}...."
-
-
 def get_host_name() -> str:
     """Get the hostname."""
     hostname = ""
@@ -242,7 +236,6 @@ def non_monitoring_services(exclude_services=[]) -> list:
 
 @app.after_request
 def add_security_headers(response):
-    # Recommended security headers
     response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0"
     response.headers["Pragma"] = "no-cache"
     response.headers["Expires"] = "0"
