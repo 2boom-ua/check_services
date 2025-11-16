@@ -17,13 +17,13 @@
     --mviolet: #AE8FC0;
     --mdarkblue: #0881d8;
     --bgyellow: #FFCD66;
-    --bbyellow: #FAB120;
+    --bbyellow: #E0A424;
     --bggreen: #64B461;
     --bbgreen: #3E943B;
     --bgred: #ff2337;
     --bbred: #B81422;
     --bgorange: #FF6433;
-    --bborange: #F23C0E;
+    --bborange: #C43D1C;
     --bgwhite: #F5F5F5;
     --bggrey: #CFCFCF;
 
@@ -82,9 +82,11 @@ body {
 }
 
 h1 {
+    display: flex;
+    justify-content: space-between;
     color: var(--mapp);
     font-size: 1em;
-    margin: 5px 5px 8px;
+    margin: 5px 5px;
 }
 
 /* Table Styles */
@@ -127,7 +129,7 @@ h1 {
 table {
     width: 100%;
     border-collapse: collapse;
-    margin-top: 10px;
+    margin-top: 6px;
     background: var(--msbkg);
 }
 
@@ -159,8 +161,7 @@ td span[title] {
 
 .copyright {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
+    justify-content: flex-end;
     margin-top: 8px;
     padding-bottom: 10px;
 }
@@ -168,6 +169,11 @@ td span[title] {
 .copyright span {
     font-size: 0.85em;
     color: var(--mborder);
+}
+.h1_ext {
+    font-weight: normal;
+    font-size: 0.9em; 
+    color: var(--mapp);
 }
 
 /* Mobile Styles */
