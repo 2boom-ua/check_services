@@ -11,7 +11,7 @@
 </head>
 
 <body>
-    <h1>Service Tracking: {{ hostname }}</h1>
+    <h1><span>{{ hostname }}</span><span class="h1_ext">Systemd Unit Files</span></h1>
     {% if services is defined and services %}
     <table id="servicesTable">
         <thead>
@@ -69,7 +69,6 @@
     <p>No services available to display. Check server logs for details.</p>
     {% endif %}
     <div class="copyright">
-        <span>Systemd Unit Files</span>
         <span>Checkservices, © 2boom, 2024-2025</span>
     </div>
 </body>
