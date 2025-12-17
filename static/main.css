@@ -89,6 +89,53 @@ h1 {
     margin: 5px 5px;
 }
 
+.status-round {
+    position: relative;
+    display: inline-block;
+    cursor: default;
+}
+
+.status-round::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    margin-bottom: 8px;
+    padding: 6px 10px;
+    background: var(--color-scheme-text-color);
+    color: var(--color-scheme-background);
+    font-size: 12px;
+    white-space: nowrap;
+    border-radius: 4px;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.2s, visibility 0.2s;
+    z-index: 10;
+    pointer-events: none;
+}
+
+.status-round::before {
+    content: "";
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    margin-bottom: 2px;
+    border: 6px solid transparent;
+    border-top-color: var(--color-scheme-background);
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.2s, visibility 0.2s;
+    z-index: 10;
+}
+
+.status-round:hover::after,
+.status-round:hover::before {
+    opacity: 1;
+    visibility: visible;
+}
+
 /* Table Styles */
 .white-round {
         width: 13px;
@@ -241,4 +288,5 @@ td span[title] {
     h1 {
         display: none;
     }
+
 }
