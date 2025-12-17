@@ -30,9 +30,9 @@
                 <td data-label="Service"><span class="nowrap">{{ service[1] }}</span></td>
                 <td data-label="Status">
                     {% if service[3] == "0" %}
-                        <div class="green-round" title="Active"></div>
+                        <div class="status-round green-round" data-tooltip="Active"></div>
                     {% else %}
-                        <div class="red-round" title="Inactive"></div>
+                        <div class="status-round red-round" data-tooltip="Inactive"></div>
                     {% endif %}
                 </td>
                 <td data-label="Description"><span class="nowrap">{{ service[2] }}</span></td>
@@ -109,5 +109,6 @@
             });
     }, 30000);
 </script>
+
 
 </html>
