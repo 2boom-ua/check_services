@@ -38,6 +38,7 @@
     --mhbkg: #EEEEEE;
     --mhbor: #FF6368;
     --mborder: #CFCFCF;
+    --mfooter: #B3B3B3;
     --mactive: #5E6E18;
     --minactive: #FF5C5F;
     --mexited: #F9B236;
@@ -57,6 +58,7 @@
         --mhbkg: #454545;
         --mhbor: #FF595E;
         --mborder: #666666;
+        --mfooter: #666666;
         --mactive: #B9B9C8;
         --minactive: #FF5C5F;
         --mexited: #F9B236;
@@ -215,7 +217,7 @@ td span[title] {
 
 .copyright span {
     font-size: 0.85em;
-    color: var(--mborder);
+    color: var(--mfooter);
 }
 .h1_ext {
     font-weight: normal;
@@ -288,5 +290,4 @@ td span[title] {
     h1 {
         display: none;
     }
-
 }
